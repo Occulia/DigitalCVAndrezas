@@ -167,7 +167,7 @@ const certificados = [
   {
     id: 10,
     empresa: "National Association of State Boards of Accountancy (NASBA)",
-    logo: "http://localhost:4000/images/nasba.png",
+    logo: "http://localhost:4000/nasba.png",
     titulo:
       "Learning Data Analytics Part 2: Extending and Applying Core Knowledge",
     verificacao: "Verificação emitida em mar de 2025",
@@ -177,7 +177,7 @@ const certificados = [
   {
     id: 11,
     empresa: "National Association of State Boards of Accountancy (NASBA)",
-    logo: "http://localhost:4000/images/nasba.png",
+    logo: "http://localhost:4000/nasba.png",
     titulo: "Learning Data Analytics: 1 Foundations",
     verificacao: "Verificação emitida em mar de 2025",
     competencias: "Analítica de dados",
@@ -222,7 +222,7 @@ const certificados = [
   {
     id: 16,
     empresa: "National Association of State Boards of Accountancy (NASBA)",
-    logo: "http://localhost:4000/images/nasba.png",
+    logo: "http://localhost:4000/nasba.png",
     titulo: "Cybersecurity Foundations",
     verificacao: "Verificação emitida em fev de 2025",
     competencias: "Cibersegurança",
@@ -240,7 +240,7 @@ const certificados = [
   {
     id: 18,
     empresa: "Project Management Institute",
-    logo: "http://localhost:4000/images/PMI.jpg",
+    logo: "http://localhost:4000/PMI.jpg",
     titulo: "GitHub Issues and Projects for Teams",
     verificacao: "Verificação emitida em fev de 2025",
     competencias: "GitHub · Gestão de problemas",
@@ -249,7 +249,7 @@ const certificados = [
   {
     id: 19,
     empresa: "Project Management Institute",
-    logo: "http://localhost:4000/images/PMI.jpg",
+    logo: "http://localhost:4000/PMI.jpg",
     titulo: "Introduction to Artificial Intelligence (2023)",
     verificacao: "Verificação emitida em fev de 2025",
     competencias:
