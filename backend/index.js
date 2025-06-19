@@ -80,7 +80,7 @@ const certificados = [
     empresa: "Microsoft",
     logo: "https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg",
     titulo:
-      "Foundations for a Career in Generative AI by Microsoft and LinkedIn",
+      "Foundations for a Career in Generative AI by Microsoft and LinkedInNNN",
     verificacao: "Verificação emitida em mar de 2025",
     competencias:
       "Ética na computação · Inteligência artificial · IA generativa",
