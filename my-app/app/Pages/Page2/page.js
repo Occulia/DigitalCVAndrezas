@@ -88,6 +88,7 @@ export default function Projetos() {
           maxWidth: "1200px",
           margin: "0 auto",
           padding: "0 1rem",
+          marginBottom: "50px",
         }}
       >
         {projetos.map((proj) => (

@@ -85,17 +85,6 @@ export default function FormacaoAcademica() {
           ({ id, instituicao, curso, periodo, descricao, competencias }) => (
             <article key={id} style={styles.card}>
               <div style={styles.header}>
-                <img
-                  src={
-                    formacoes.find((f) => f.instituicao === instituicao)
-                      ?.logo || "/default-logo.png"
-                  }
-                  alt={`${instituicao} logo`}
-                  style={styles.logo}
-                  onError={(e) => {
-                    e.target.src = "/default-logo.png";
-                  }}
-                />
                 <div>
                   <h2 style={styles.instituicao}>{instituicao}</h2>
                   <h3 style={styles.curso}>{curso}</h3>
@@ -126,6 +115,7 @@ const styles = {
     maxWidth: "900px",
     margin: "0 auto 4rem",
     padding: "0 1.5rem",
+    marginBottom: "50px",
   },
   card: {
     backgroundColor: "rgba(255, 255, 255, 0.9)",

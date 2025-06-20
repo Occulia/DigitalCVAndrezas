@@ -45,7 +45,13 @@ export default function Certificados() {
       }}
     >
       <Menu />
-      <main style={{ padding: "2rem", fontFamily: "sans-serif" }}>
+      <main
+        style={{
+          padding: "2rem",
+          fontFamily: "sans-serif",
+          marginBottom: "50px",
+        }}
+      >
         <h1 style={{ color: "white" }}>Certificados</h1>
         <div style={styles.grid}>
           {certificados.map((cert, idx) => (

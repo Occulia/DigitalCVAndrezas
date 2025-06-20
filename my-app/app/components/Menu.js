@@ -26,6 +26,12 @@ export default function Menu() {
         </button>
         <button
           style={styles.navButton}
+          onClick={() => router.push("/Pages/Page3")}
+        >
+          Certificados
+        </button>
+        <button
+          style={styles.navButton}
           onClick={() => router.push("/Pages/Page4")}
         >
           Formação
