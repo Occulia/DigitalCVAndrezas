@@ -1,6 +1,7 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import Menu from "../../components/Menu";
+import Footer from "../../components/Footer";
 
 export default function Projetos() {
   const [projetos, setProjetos] = useState([]);
@@ -8,7 +9,7 @@ export default function Projetos() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/projetos") // ✅ Changed from localhost to relative path
+    fetch("/api/projetos")
       .then((res) => {
         if (!res.ok) throw new Error("Erro ao carregar projetos");
         return res.json();
@@ -86,7 +87,7 @@ export default function Projetos() {
           gap: "2rem",
           maxWidth: "1200px",
           margin: "0 auto",
-          padding: "0 1rem", // Added padding for mobile responsiveness
+          padding: "0 1rem",
         }}
       >
         {projetos.map((proj) => (
@@ -228,6 +229,7 @@ export default function Projetos() {
           </div>
         ))}
       </div>
+      <Footer />
     </div>
   );
 }

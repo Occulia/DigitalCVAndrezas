@@ -4,78 +4,71 @@ import { useRouter } from "next/navigation";
 
 export default function Menu() {
   const router = useRouter();
-  const dosomething = () => {
-    console.log("aki");
-    router.push("/Pages/Page1");
-  };
-  const dosomething2 = () => {
-    console.log("aki");
-    router.push("/Pages/Page2");
-  };
-  const dosomething0 = () => {
-    console.log("aki");
-    router.push("/");
-  };
-  const dosomething3 = () => {
-    console.log("aki");
-    router.push("/Pages/Page3");
-  };
-  const dosomething4 = () => {
-    console.log("aki");
-    router.push("/Pages/Page4");
-  };
+
   return (
-    <div style={styles.menu}>
-      <button style={styles.btn} onClick={dosomething0}>
-        🏠 Home
-      </button>
-      <button style={styles.btn} onClick={dosomething}>
-        🙍‍♂️ Perfil
-      </button>
-      <button style={styles.btn} onClick={dosomething2}>
-        🛠️ Projetos
-      </button>
-      <button style={styles.btn} onClick={dosomething3}>
-        📄 Certificados
-      </button>
-      <button style={styles.btn} onClick={dosomething4}>
-        🎓 Formação
-      </button>
-    </div>
+    <header style={styles.header}>
+      <h1 style={styles.logo}>André Rodrigues</h1>
+      <nav style={styles.nav}>
+        <button style={styles.navButton} onClick={() => router.push("/")}>
+          Home
+        </button>
+        <button
+          style={styles.navButton}
+          onClick={() => router.push("/Pages/Page1")}
+        >
+          Perfil
+        </button>
+        <button
+          style={styles.navButton}
+          onClick={() => router.push("/Pages/Page2")}
+        >
+          Projetos
+        </button>
+        <button
+          style={styles.navButton}
+          onClick={() => router.push("/Pages/Page4")}
+        >
+          Formação
+        </button>
+      </nav>
+    </header>
   );
 }
 
-// This component is a simple menu with two buttons that navigate to different pages.
-// It uses the Next.js router to handle navigation.
-// The `use client` directive indicates that this component should be rendered on the client side.
-// The `dosomething` function is called when either button is clicked, and it logs a message to the console and navigates to the "/Pages/Page1" route.
-// The component is styled with inline styles for padding and font family.
-// This is a basic example of how to create a client-side component in a Next.js application that can navigate between pages.
-// The component can be imported and used in other parts of the application, such as in a main layout or specific pages.
-// The buttons currently navigate to the same page, but they can be modified to point to different routes as needed.
-
 const styles = {
-  menu: {
+  header: {
     display: "flex",
-    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    padding: "10px",
-    fontFamily: "sans-serif",
-    gap: "10px",
-    backgroundColor: "rgba(255, 255, 255, 0.08)", // transparente, combina com gradiente
-    backdropFilter: "blur(10px)", // efeito vidro
+    padding: "1.5rem 5%",
+    backgroundColor: "rgba(15, 23, 42, 0.6)", // Azul escuro com transparência
+    backdropFilter: "blur(10px)",
+    boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
+    zIndex: 10,
   },
-  btn: {
-    padding: "10px",
-    fontSize: "16px",
-    cursor: "pointer",
-    textAlign: "center",
-    backgroundColor: "#0070f3",
-    color: "#fff",
+  logo: {
+    fontSize: "1.8rem",
+    fontWeight: "700",
+    margin: 0,
+    color: "#60a5fa", // Azul claro
+    textShadow: "0 0 8px rgba(96, 165, 250, 0.5)",
+  },
+  nav: {
+    display: "flex",
+    gap: "1.5rem",
+  },
+  navButton: {
+    background: "none",
     border: "none",
-  },
-  btnHover: {
-    backgroundColor: "#005bb5",
+    fontSize: "1rem",
+    fontWeight: "600",
+    color: "#ffff", // Cinza claro
+    cursor: "pointer",
+    padding: "0.5rem 1rem",
+    transition: "all 0.3s ease",
+    borderRadius: "4px",
+    position: "relative",
+    overflow: "hidden",
+    zIndex: 1,
   },
 };

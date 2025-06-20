@@ -3,6 +3,7 @@ import Menu from "../../components/Menu";
 import React from "react";
 import Image from "next/image";
 import userPic from "../../images/user.jpg";
+import Footer from "../../components/Footer";
 
 export default function Perfil() {
   return (
@@ -11,7 +12,6 @@ export default function Perfil() {
         minHeight: "100vh",
         background: "linear-gradient(135deg, #1f1c2c, #928dab)",
         color: "#f0f0f5",
-        paddingBottom: "3rem",
       }}
     >
       <Menu />
@@ -90,6 +90,7 @@ export default function Perfil() {
           </p>
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

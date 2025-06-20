@@ -2,13 +2,14 @@
 
 import React, { useEffect, useState } from "react";
 import Menu from "../../components/Menu";
+import Footer from "../../components/Footer";
 
 export default function Certificados() {
   const [certificados, setCertificados] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch("/api/certificados") // ✅ Alterado para rota relativa
+    fetch("/api/certificados")
       .then((res) => res.json())
       .then((data) => {
         setCertificados(data);
@@ -59,7 +60,7 @@ export default function Certificados() {
                 style={styles.logo}
                 loading="lazy"
                 onError={(e) => {
-                  e.target.src = "/placeholder-logo.png"; // Adicione um fallback
+                  e.target.src = "/placeholder-logo.png";
                 }}
               />
               <h2 style={styles.certTitle}>{cert.titulo}</h2>
@@ -81,6 +82,7 @@ export default function Certificados() {
           ))}
         </div>
       </main>
+      <Footer />
     </div>
   );
 }

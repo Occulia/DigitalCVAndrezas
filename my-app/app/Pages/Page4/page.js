@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Menu from "../../components/Menu";
+import Footer from "../../components/Footer";
 
 export default function FormacaoAcademica() {
   const [formacoes, setFormacoes] = useState([]);
@@ -9,7 +10,7 @@ export default function FormacaoAcademica() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    fetch("/api/formacoes") // ✅ Changed from localhost to relative path
+    fetch("/api/formacoes")
       .then((res) => {
         if (!res.ok) throw new Error("Erro ao carregar formações");
         return res.json();
@@ -115,6 +116,7 @@ export default function FormacaoAcademica() {
           )
         )}
       </section>
+      <Footer />
     </div>
   );
 }
