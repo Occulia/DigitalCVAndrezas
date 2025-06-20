@@ -139,7 +139,7 @@ const certificados = [
   {
     id: 7,
     empresa: "Project Management Institute",
-    logo: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwww.coloradotech.edu%2FMedia%2FDefault%2FCTU%2Fbadges%2Fpmi-gac-logo.svg&tbnid=ZCGGk81P6dzHIM&vet=10CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo..i&imgrefurl=https%3A%2F%2Fwww.coloradotech.edu%2Fblog%2F2022%2Foctober%2Fctu-project-management-program-accreditation-is-reaffirmed-by-pmi-global-accreditation-center&docid=tGscM3o5p-V0hM&w=2400&h=2400&itg=1&q=https%3A%2F%2Fthehiveindex.com%2Fcommunities%2Fpmi-project%2F&ved=0CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo",
+    logo: "https://images.credly.com/images/31da017a-a50c-48a8-8012-c4811063581f/blob.png",
     titulo: "Introduction to Artificial Intelligence",
     verificacao: "Verificação emitida em mar de 2025",
     competencias: "Inteligência artificial",
@@ -240,7 +240,7 @@ const certificados = [
   {
     id: 18,
     empresa: "Project Management Institute",
-    logo: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwww.coloradotech.edu%2FMedia%2FDefault%2FCTU%2Fbadges%2Fpmi-gac-logo.svg&tbnid=ZCGGk81P6dzHIM&vet=10CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo..i&imgrefurl=https%3A%2F%2Fwww.coloradotech.edu%2Fblog%2F2022%2Foctober%2Fctu-project-management-program-accreditation-is-reaffirmed-by-pmi-global-accreditation-center&docid=tGscM3o5p-V0hM&w=2400&h=2400&itg=1&q=https%3A%2F%2Fthehiveindex.com%2Fcommunities%2Fpmi-project%2F&ved=0CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo",
+    logo: "https://images.credly.com/images/31da017a-a50c-48a8-8012-c4811063581f/blob.png",
     titulo: "GitHub Issues and Projects for Teams",
     verificacao: "Verificação emitida em fev de 2025",
     competencias: "GitHub · Gestão de problemas",
@@ -249,7 +249,7 @@ const certificados = [
   {
     id: 19,
     empresa: "Project Management Institute",
-    logo: "https://www.google.com/imgres?imgurl=https%3A%2F%2Fwww.coloradotech.edu%2FMedia%2FDefault%2FCTU%2Fbadges%2Fpmi-gac-logo.svg&tbnid=ZCGGk81P6dzHIM&vet=10CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo..i&imgrefurl=https%3A%2F%2Fwww.coloradotech.edu%2Fblog%2F2022%2Foctober%2Fctu-project-management-program-accreditation-is-reaffirmed-by-pmi-global-accreditation-center&docid=tGscM3o5p-V0hM&w=2400&h=2400&itg=1&q=https%3A%2F%2Fthehiveindex.com%2Fcommunities%2Fpmi-project%2F&ved=0CAgQxiAoA2oXChMI0OXTjZGAjgMVAAAAAB0AAAAAECo",
+    logo: "https://images.credly.com/images/31da017a-a50c-48a8-8012-c4811063581f/blob.png",
     titulo: "Introduction to Artificial Intelligence (2023)",
     verificacao: "Verificação emitida em fev de 2025",
     competencias:
