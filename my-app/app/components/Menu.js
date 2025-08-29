@@ -50,7 +50,7 @@ const styles = {
     backgroundColor: "rgba(15, 23, 42, 0.6)", // Azul escuro com transparência
     backdropFilter: "blur(10px)",
     boxShadow: "0 2px 10px rgba(0,0,0,0.2)",
-    zIndex: 10,
+    zIndex: 2,
   },
   logo: {
     fontSize: "1.8rem",
@@ -75,6 +75,6 @@ const styles = {
     borderRadius: "4px",
     position: "relative",
     overflow: "hidden",
-    zIndex: 1,
+    zIndex: 2,
   },
 };
