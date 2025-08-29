@@ -301,7 +301,6 @@ const styles = {
     zIndex: 1,
   },
   gridOverlay: {
-    position: "absolute",
     top: 0,
     left: 0,
     width: "100%",
