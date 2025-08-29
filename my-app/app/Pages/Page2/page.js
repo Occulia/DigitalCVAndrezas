@@ -208,6 +208,7 @@ export default function Projetos() {
                     fontSize: "1.6rem",
                     fontWeight: "700",
                     letterSpacing: "0.02em",
+                    textAlign: "center",
                   }}
                 >
                   {proj.titulo}
@@ -328,7 +329,7 @@ const styles = {
       "radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%)",
     borderRadius: "50%",
     animation: "pulse 8s infinite alternate",
-    zIndex: 1,
+    zIndex: 0,
   },
   lightEffect2: {
     position: "absolute",
@@ -340,7 +341,7 @@ const styles = {
       "radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)",
     borderRadius: "50%",
     animation: "pulse 12s infinite alternate-reverse",
-    zIndex: 1,
+    zIndex: 0,
   },
   lightEffect3: {
     position: "absolute",
@@ -352,7 +353,7 @@ const styles = {
       "radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
     borderRadius: "50%",
     animation: "pulse 10s infinite alternate",
-    zIndex: 1,
+    zIndex: 0,
   },
   gridOverlay: {
     position: "absolute",
@@ -365,7 +366,7 @@ const styles = {
       linear-gradient(90deg, rgba(18, 25, 50, 0.3) 1px, transparent 1px)
     `,
     backgroundSize: "50px 50px",
-    zIndex: 1,
+    zIndex: 0,
     animation: "gridMove 20s infinite linear",
   },
   projectCard: {
