@@ -79,7 +79,7 @@ const projetos = [
     link: "",
   },
   {
-    id: 6,
+    id: 7,
     titulo: "Audio Guide para o museu da Escola Secundária Emídio Navarro",
     descricao:
       "Aplicação Android para melhorar a experiência dos visitantes do museu da escola, convertendo informações textuais das peças em áudio em português e inglês.",
