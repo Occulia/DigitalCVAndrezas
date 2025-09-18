@@ -13,13 +13,11 @@ const projetos = [
     id: 1,
     titulo: "Sistema de Gestão para Indústria Têxtil",
     descricao: `
-        O objetivo central foi criar uma ferramenta robusta e intuitiva que otimizasse a gestão de todos os fluxos operacionais da empresa.  
-        O sistema aborda várias vertentes:
-        - **Gestão Centralizada**: Controlo de clientes e fábricas parceiras a partir de uma única plataforma.  
-        - **Gestão de Encomendas**: Implementação de um fluxo de trabalho com vários estados, permitindo acompanhar cada encomenda em tempo real, desde a criação até à expedição para o cliente.  
-        - **Análise de Dados**: Dashboard com métricas essenciais para apoiar a tomada de decisão e a gestão estratégica do negócio.  
-        - **Integração com Sistemas de Produção**: Comunicação automatizada com software de CAD, através da geração de ficheiros KCAD com base nas medidas guardadas na base de dados.
-          `,
+    Sistema de gestão para indústria têxtil, com foco em:
+    - Gestão centralizada de clientes e parceiros  
+    - Acompanhamento de encomendas em tempo real  
+    - Dashboards de análise e integração com sistemas de produção
+    `,
     tecnologias: [
       "HTML",
       "Tailwind CSS",
