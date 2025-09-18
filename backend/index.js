@@ -7,10 +7,31 @@ const PORT = process.env.PORT || 4000; // Usa a porta da Vercel ou 4000 localmen
 
 app.use(cors());
 
-// Dados dos projetos (podes expandir depois, puxar de BD etc)
+// Dados dos projetos
 const projetos = [
   {
     id: 1,
+    titulo: "Sistema de Gestão para Indústria Têxtil",
+    descricao: `
+        O objetivo central foi criar uma ferramenta robusta e intuitiva que otimizasse a gestão de todos os fluxos operacionais da empresa.  
+        O sistema aborda várias vertentes:
+        - **Gestão Centralizada**: Controlo de clientes e fábricas parceiras a partir de uma única plataforma.  
+        - **Gestão de Encomendas**: Implementação de um fluxo de trabalho com vários estados, permitindo acompanhar cada encomenda em tempo real, desde a criação até à expedição para o cliente.  
+        - **Análise de Dados**: Dashboard com métricas essenciais para apoiar a tomada de decisão e a gestão estratégica do negócio.  
+        - **Integração com Sistemas de Produção**: Comunicação automatizada com software de CAD, através da geração de ficheiros KCAD com base nas medidas guardadas na base de dados.
+          `,
+    tecnologias: [
+      "HTML",
+      "Tailwind CSS",
+      "JavaScript",
+      "Laravel",
+      "MariaDB",
+      "SQL",
+    ],
+    link: "",
+  },
+  {
+    id: 2,
     titulo: "Softinsa Saúde",
     descricao:
       "Aplicação móvel para monitorizar planos medicinais, controlo de peso, vacinações, entre outros, desenvolvida em React Native para Android, funcionando offline e preparada para migração online.",
@@ -18,7 +39,7 @@ const projetos = [
     link: "https://github.com/Occulia/HealthApp.git",
   },
   {
-    id: 2,
+    id: 3,
     titulo: "CV Digital com Next.js",
     descricao:
       "Projeto de currículo digital construído com Next.js, que integra um backend API para fornecer dados de formação acadêmica e projetos, e um frontend que consome essa API para apresentar as informações de forma dinâmica e elegante.",
@@ -26,7 +47,7 @@ const projetos = [
     link: "https://github.com/Occulia/DigitalCV.git",
   },
   {
-    id: 3,
+    id: 4,
     titulo: "ByteBridges",
     descricao:
       "Plataforma online para suportar processos da indústria tecnológica, incluindo compra, produção e venda de equipamentos, desenvolvida com Django e base de dados PostgreSQL e MongoDB.",
@@ -34,7 +55,7 @@ const projetos = [
     link: "https://github.com/HugoPT/ByteBridges.git",
   },
   {
-    id: 4,
+    id: 5,
     titulo: "Gestor LPR",
     descricao:
       "Sistema avançado de reconhecimento de matrículas (LPR) com algoritmo OCR e base de dados SQL para controle de acesso exclusivo a propriedades. Plataforma web robusta em Django com integração a dispositivos Shelly e Sonoff, além de lista detalhada de acessos.",
@@ -42,7 +63,7 @@ const projetos = [
     link: "",
   },
   {
-    id: 5,
+    id: 6,
     titulo: "Projeto Integrado (PINT) para a Empresa Softinsa",
     descricao:
       "Projeto acadêmico focado no desenvolvimento front-end, backend e mobile para a empresa Softinsa, envolvendo protótipo em Figma, base de dados, e desenvolvimento com React.js, Node.js e PostgreSQL.",
