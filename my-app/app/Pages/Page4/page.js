@@ -3,193 +3,206 @@ import React, { useEffect, useState, useRef } from "react";
 import Menu from "../../components/Menu";
 import Footer from "../../components/Footer";
 
+// --- COMPONENTE VISUAL: DIGITAL RAIN (MANTÉM O TEMA) ---
+const DigitalRainBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    let width, height;
+
+    const chars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let drops = [];
+    let symbols = [];
+
+    const init = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+
+      const columns = Math.floor(width / 22);
+      drops = [];
+      symbols = [];
+
+      for (let i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -100;
+        symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+      }
+    };
+
+    const animate = () => {
+      // Fundo com rastro controlado (sem blur)
+      ctx.fillStyle = "rgba(5, 5, 5, 0.12)";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.font = "18px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        // Troca de símbolo lenta (sem flicker)
+        if (Math.random() > 0.98) {
+          symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        ctx.fillStyle = Math.random() > 0.97 ? "#ffffff" : "#06b6d4";
+        ctx.fillText(symbols[i], i * 22, drops[i] * 22);
+
+        if (drops[i] * 22 > height && Math.random() > 0.98) {
+          drops[i] = 0;
+        }
+
+        drops[i] += 0.09;
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("resize", init);
+    init();
+    animate();
+
+    return () => window.removeEventListener("resize", init);
+  }, []);
+
+  return <canvas ref={canvasRef} style={styles.canvas} />;
+};
+// --- FIM DO COMPONENTE VISUAL ---
+
 export default function FormacaoAcademica() {
   const [formacoes, setFormacoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mounted, setMounted] = useState(false);
-  const containerRef = useRef(null);
+  const containerRef = useRef(null); // Ref desnecessária após remover partículas customizadas
 
   useEffect(() => {
     setMounted(true);
-
-    // Efeito de partículas
-    const container = containerRef.current;
-    if (!container) return;
-
-    const createParticle = () => {
-      const particle = document.createElement("div");
-      particle.style.position = "absolute";
-      particle.style.width = "4px";
-      particle.style.height = "4px";
-      particle.style.background = "rgba(96, 165, 250, 0.6)";
-      particle.style.boxShadow = "0 0 10px rgba(96, 165, 250, 0.8)";
-      particle.style.borderRadius = "50%";
-      particle.style.zIndex = "0";
-
-      // Posição aleatória
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      particle.style.left = `${x}%`;
-      particle.style.top = `${y}%`;
-
-      container.appendChild(particle);
-
-      // Animação
-      const keyframes = [
-        { transform: "translate(0, 0)", opacity: 0 },
-        {
-          transform: `translate(${Math.random() * 40 - 20}px, ${
-            Math.random() * 40 - 20
-          }px)`,
-          opacity: 1,
-        },
-        {
-          transform: `translate(${Math.random() * 80 - 40}px, ${
-            Math.random() * 80 - 40
-          }px)`,
-          opacity: 0,
-        },
-      ];
-
-      const options = {
-        duration: 3000 + Math.random() * 4000,
-        iterations: Infinity,
-        delay: Math.random() * 2000,
-      };
-
-      particle.animate(keyframes, options);
-    };
-
-    // Criar várias partículas
-    for (let i = 0; i < 20; i++) {
-      createParticle();
-    }
   }, []);
 
   useEffect(() => {
-    fetch("/api/formacoes")
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao carregar formações");
-        return res.json();
-      })
-      .then((data) => {
-        setFormacoes(data);
-        setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
+    // URL inteligente (mantida a tua lógica de fetch)
+    const apiUrl =
+      process.env.NODE_ENV === "development"
+        ? "http://localhost:4000/api/formacoes"
+        : "/api/formacoes";
+
+    const fetchData = (url, isFallback = false) => {
+      fetch(url)
+        .then(async (res) => {
+          if (!res.ok) {
+            const errorText = await res.text();
+            throw new Error(`Erro ${res.status}: ${errorText}`);
+          }
+          return res.json();
+        })
+        .then((data) => {
+          setFormacoes(data);
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(
+            `Erro no fetch (${isFallback ? "Fallback" : "Primary"}):`,
+            err
+          );
+          if (!isFallback) {
+            const fallbackUrl = apiUrl.includes("localhost")
+              ? "/api/formacoes"
+              : "http://localhost:4000/api/formacoes";
+            fetchData(fallbackUrl, true);
+          } else {
+            setError(err.message);
+            setLoading(false);
+          }
+        });
+    };
+
+    fetchData(apiUrl);
   }, []);
+
+  // --- LOADING / ERROR STYLES ATUALIZADOS ---
+  const sharedBackground = {
+    minHeight: "100vh",
+    background: "#0a0a0a", // Fundo Sólido Escuro
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "#fff",
+    fontSize: "1.5rem",
+    position: "relative",
+    overflow: "hidden",
+    fontFamily: "'Courier New', monospace",
+  };
 
   if (loading)
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#fff",
-          fontSize: "1.5rem",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div style={styles.lightEffect1}></div>
-        <div style={styles.lightEffect2}></div>
-        <div style={styles.gridOverlay}></div>
+      <div style={sharedBackground}>
+        <DigitalRainBackground />
+        <div style={styles.scanline}></div>
         <div style={{ position: "relative", zIndex: 2 }}>
-          Carregando formações...
+          <span style={{ color: "#06b6d4" }}>[LOG]</span> Carregando Dados
+          Acadêmicos... <span style={styles.blinkingCursor}>_</span>
         </div>
       </div>
     );
 
   if (error)
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#ff6b6b",
-          fontSize: "1.2rem",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div style={styles.lightEffect1}></div>
-        <div style={styles.lightEffect2}></div>
-        <div style={styles.gridOverlay}></div>
-        <div style={{ position: "relative", zIndex: 2 }}>Erro: {error}</div>
+      <div style={sharedBackground}>
+        <DigitalRainBackground />
+        <div style={styles.scanline}></div>
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <span style={{ color: "#ff6b6b" }}>[ERROR]</span> Falha na Conexão:{" "}
+          {error}
+        </div>
       </div>
     );
 
+  // --- RENDER PRINCIPAL ---
   return (
-    <div
-      ref={containerRef}
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Efeitos de luz de fundo */}
-      <div style={styles.lightEffect1}></div>
-      <div style={styles.lightEffect2}></div>
-      <div style={styles.lightEffect3}></div>
-
-      {/* Grade animada */}
-      <div style={styles.gridOverlay}></div>
-
-      <Menu />
+    <div style={styles.mainContainer}>
+      <DigitalRainBackground />
+      <div style={styles.scanline}></div>
 
       <div style={{ position: "relative", zIndex: 2 }}>
+        <Menu />
+
         <h1
           style={{
-            color: "#fff",
-            fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
-            marginBottom: "2.5rem",
-            textAlign: "center",
-            textShadow: "0 0 20px rgba(96, 165, 250, 0.8)",
-            paddingTop: "2rem",
+            ...styles.pageTitle,
             opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "opacity 1s ease, transform 1s ease",
           }}
         >
-          Minha <span style={{ color: "#60a5fa" }}>Formação Acadêmica</span>
+          <span style={styles.codeLabel}>{"<DATA_STREAM_ACADEMIC>"}</span>
+          <span style={styles.glitchTitle} data-text="REGISTO DE FORMAÇÃO">
+            REGISTO DE FORMAÇÃO
+          </span>
         </h1>
 
-        <section style={styles.container}>
-          {/* Linha do tempo vertical */}
+        <section style={styles.timelineContainer}>
+          {/* Linha do tempo central - Cabo de Energia */}
           <div style={styles.timeline}></div>
 
           {formacoes.map((formacao, index) => (
             <article
               key={formacao.id}
+              className="formacao-card"
               style={{
                 ...styles.card,
                 opacity: mounted ? 1 : 0,
-                transform: mounted
-                  ? "translateX(0)"
-                  : `translateX(${index % 2 === 0 ? "-30px" : "30px"})`,
                 transition: `opacity 0.8s ease ${
                   index * 0.2
                 }s, transform 0.8s ease ${index * 0.2}s, box-shadow 0.3s ease`,
+                // Posição alternada
                 marginLeft: index % 2 === 0 ? "0" : "auto",
                 marginRight: index % 2 === 0 ? "auto" : "0",
+                textAlign: index % 2 === 0 ? "left" : "right",
               }}
+              // Efeito de hover mantido com pequenas melhorias
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-10px)";
+                e.currentTarget.style.transform = "translateY(-5px)";
                 e.currentTarget.style.boxShadow =
-                  "0 20px 40px rgba(96, 165, 250, 0.3)";
+                  "0 15px 40px rgba(6, 182, 212, 0.5)";
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
@@ -197,18 +210,16 @@ export default function FormacaoAcademica() {
                   "0 8px 32px rgba(0, 0, 0, 0.3)";
               }}
             >
-              {/* Marcador da linha do tempo */}
+              {/* Marcador da linha do tempo com estilo de "Nó de Dados" */}
               <div
                 style={{
                   ...styles.timelineMarker,
-                  left: index % 2 === 0 ? "-40px" : "auto",
-                  right: index % 2 === 0 ? "auto" : "-40px",
+                  left: index % 2 === 0 ? "calc(100% + 18px)" : "-40px",
+                  right: index % 2 === 0 ? "auto" : "calc(100% + 18px)",
                 }}
               >
                 <div style={styles.timelineDot}></div>
               </div>
-
-              <div style={styles.cardGlow}></div>
 
               <div style={styles.header}>
                 <div style={styles.logoContainer}>
@@ -218,36 +229,67 @@ export default function FormacaoAcademica() {
                     style={styles.logo}
                     onError={(e) => {
                       e.target.src =
-                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2360a5fa'%3E%3Cpath d='M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z'/%3E%3C/svg%3E";
+                        "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%2306b6d4'%3E%3Cpath d='M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z'/%3E%3C/svg%3E";
                     }}
                   />
-                  <div style={styles.logoHalo}></div>
+                  {/* <div style={styles.logoHalo}></div> // Removido para simplificar o visual do card */}
                 </div>
 
-                <div>
+                <div
+                  style={
+                    index % 2 === 0
+                      ? { textAlign: "left" }
+                      : { textAlign: "right" }
+                  }
+                >
                   <h2 style={styles.instituicao}>{formacao.instituicao}</h2>
                   <h3 style={styles.curso}>{formacao.curso}</h3>
-                  <p style={styles.periodo}>
-                    <span style={styles.periodoIcon}>📅</span>{" "}
-                    {formacao.periodo}
+                  <p
+                    style={{
+                      ...styles.periodo,
+                      justifyContent:
+                        index % 2 === 0 ? "flex-start" : "flex-end",
+                    }}
+                  >
+                    <span style={styles.periodoIcon}>⚡</span>{" "}
+                    <span style={{ color: "#10b981" }}>{formacao.periodo}</span>
                   </p>
                   {formacao.nota && (
-                    <p style={styles.nota}>
-                      <span style={styles.notaIcon}>⭐</span> Nota:{" "}
-                      {formacao.nota}
+                    <p
+                      style={{
+                        ...styles.nota,
+                        justifyContent:
+                          index % 2 === 0 ? "flex-start" : "flex-end",
+                      }}
+                    >
+                      <span style={styles.notaIcon}>📊</span> NOTA:{" "}
+                      <span style={{ color: "#fcd34d" }}>{formacao.nota}</span>
                     </p>
                   )}
                 </div>
               </div>
 
               {formacao.descricao && (
-                <p style={styles.descricao}>{formacao.descricao}</p>
+                <p style={styles.descricao}>
+                  <span style={{ color: "#6366f1", fontWeight: "bold" }}>
+                    LOG:
+                  </span>{" "}
+                  {formacao.descricao}
+                </p>
               )}
 
               {formacao.competencias && formacao.competencias.length > 0 && (
-                <div style={styles.tagsContainer}>
-                  {formacao.competencias.map((comp, index) => (
-                    <span key={index} style={styles.tag}>
+                <div
+                  style={{
+                    ...styles.tagsContainer,
+                    justifyContent: index % 2 === 0 ? "flex-start" : "flex-end",
+                  }}
+                >
+                  {formacao.competencias.map((comp, i) => (
+                    <span key={i} style={styles.tag}>
+                      <span style={{ color: "#06b6d4", marginRight: "5px" }}>
+                        #
+                      </span>
                       {comp}
                     </span>
                   ))}
@@ -259,65 +301,157 @@ export default function FormacaoAcademica() {
       </div>
 
       <Footer />
+
+      {/* ESTILOS GLOBAIS PARA ANIMAÇÕES */}
+      <style jsx global>{`
+        @keyframes scanline {
+          0% {
+            top: -10%;
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            top: 110%;
+            opacity: 0;
+          }
+        }
+        @keyframes glitch {
+          0% {
+            text-shadow: 2px 0 0 #6366f1, -2px 0 0 #06b6d4;
+          }
+          25% {
+            text-shadow: -2px 0 0 #6366f1, 2px 0 0 #06b6d4;
+          }
+          50% {
+            text-shadow: 1px 0 0 #6366f1, -1px 0 0 #06b6d4;
+          }
+          75% {
+            text-shadow: -1px 0 0 #6366f1, 1px 0 0 #06b6d4;
+          }
+          100% {
+            text-shadow: 2px 0 0 #6366f1, -2px 0 0 #06b6d4;
+          }
+        }
+
+        .formacao-card:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 15px 40px rgba(6, 182, 212, 0.5) !important;
+          border-color: #06b6d4 !important;
+        }
+
+        @media (max-width: 800px) {
+          ${styles.timelineContainer.maxWidth} {
+            padding: 0 1rem;
+          }
+
+          ${styles.timeline} {
+            display: none;
+          }
+
+          .formacao-card {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            padding: 1.5rem !important;
+            text-align: left !important;
+          }
+
+          ${styles.timelineMarker} {
+            display: none;
+          }
+
+          ${styles.header} {
+            flex-direction: row;
+            text-align: left !important;
+          }
+
+          ${styles.periodo} {
+            justify-content: flex-start !important;
+          }
+
+          ${styles.nota} {
+            justify-content: flex-start !important;
+          }
+
+          ${styles.tagsContainer} {
+            justify-content: flex-start !important;
+          }
+        }
+      `}</style>
     </div>
   );
 }
 
 const styles = {
-  lightEffect1: {
-    position: "absolute",
-    top: "10%",
-    left: "10%",
-    width: "300px",
-    height: "300px",
-    background:
-      "radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 8s infinite alternate",
-    zIndex: 1,
+  // --- Fundo & Elementos Visuais ---
+  mainContainer: {
+    minHeight: "100vh",
+    background: "#0a0a0a", // Fundo super escuro
+    fontFamily: "'Courier New', monospace", // Fonte Tech
+    position: "relative",
+    overflowX: "hidden",
   },
-  lightEffect2: {
-    position: "absolute",
-    top: "60%",
-    right: "15%",
-    width: "400px",
-    height: "400px",
-    background:
-      "radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 12s infinite alternate-reverse",
-    zIndex: 1,
-  },
-  lightEffect3: {
-    position: "absolute",
-    bottom: "15%",
-    left: "20%",
-    width: "250px",
-    height: "250px",
-    background:
-      "radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 10s infinite alternate",
-    zIndex: 1,
-  },
-  gridOverlay: {
+  canvas: {
+    position: "fixed",
     top: 0,
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundImage: `
-      linear-gradient(rgba(18, 25, 50, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(18, 25, 50, 0.3) 1px, transparent 1px)
-    `,
-    backgroundSize: "50px 50px",
-    zIndex: 1,
-    animation: "gridMove 20s infinite linear",
+    zIndex: 0,
+    opacity: 0.4,
   },
-  container: {
+  scanline: {
+    position: "fixed",
+    left: 0,
+    width: "100%",
+    height: "5px",
+    background: "rgba(6, 182, 212, 0.5)",
+    boxShadow: "0 0 15px rgba(6, 182, 212, 0.8)",
+    zIndex: 2,
+    animation: "scanline 6s infinite linear",
+    pointerEvents: "none",
+  },
+  blinkingCursor: {
+    display: "inline-block",
+    width: "8px",
+    height: "15px",
+    background: "#06b6d4",
+    animation: "blink 1s infinite",
+    verticalAlign: "middle",
+    marginLeft: "5px",
+  },
+
+  // --- Título ---
+  pageTitle: {
+    color: "#fff",
+    fontSize: "clamp(2rem, 5vw, 3rem)",
+    marginBottom: "2.5rem",
+    textAlign: "center",
+    textShadow: "0 0 20px rgba(6, 182, 212, 0.5)",
+    paddingTop: "4rem",
+    position: "relative",
+    zIndex: 3,
+    textTransform: "uppercase",
+  },
+  codeLabel: {
+    display: "block",
+    fontSize: "0.8rem",
+    color: "#6366f1",
+    letterSpacing: "2px",
+    marginBottom: "10px",
+  },
+  glitchTitle: {
+    fontWeight: "bold",
+    animation: "glitch 3s infinite linear alternate",
+  },
+
+  // --- Timeline Layout ---
+  timelineContainer: {
     maxWidth: "1000px",
     margin: "0 auto 4rem",
     padding: "0 2rem",
-    marginBottom: "50px",
     position: "relative",
   },
   timeline: {
@@ -326,7 +460,8 @@ const styles = {
     transform: "translateX(-50%)",
     width: "4px",
     height: "100%",
-    background: "linear-gradient(to bottom, #60a5fa, #9333ea)",
+    background: "linear-gradient(to bottom, #6366f1, #06b6d4, #10b981)",
+    boxShadow: "0 0 15px rgba(6, 182, 212, 0.5)",
     zIndex: 1,
   },
   timelineMarker: {
@@ -338,40 +473,31 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 2,
+    zIndex: 3,
   },
   timelineDot: {
     width: "16px",
     height: "16px",
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-    boxShadow: "0 0 10px rgba(96, 165, 250, 0.8)",
+    background: "#06b6d4",
+    border: "2px solid #000",
+    boxShadow: "0 0 10px #06b6d4, inset 0 0 5px #fff",
     animation: "pulse 2s infinite alternate",
   },
+
+  // --- Cards (Data Blocks) ---
   card: {
-    backgroundColor: "rgba(17, 25, 40, 0.7)",
-    backdropFilter: "blur(10px)",
-    borderRadius: "16px",
+    backgroundColor: "rgba(10, 10, 15, 0.7)",
+    backdropFilter: "blur(8px)",
+    borderRadius: "2px", // Cantos afiados
     padding: "2rem",
     marginBottom: "3rem",
     boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
     transition: "all 0.3s ease",
-    border: "1px solid rgba(96, 165, 250, 0.2)",
+    border: "1px solid rgba(6, 182, 212, 0.2)",
     position: "relative",
-    overflow: "hidden",
     width: "calc(50% - 40px)",
-  },
-  cardGlow: {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    right: "0",
-    bottom: "0",
-    borderRadius: "16px",
-    boxShadow: "0 0 30px rgba(96, 165, 250, 0.3)",
-    opacity: 0,
-    animation: "pulseGlow 2s infinite alternate",
-    zIndex: -1,
+    color: "#e0e0e0",
   },
   header: {
     display: "flex",
@@ -380,41 +506,30 @@ const styles = {
     marginBottom: "1.5rem",
   },
   logoContainer: {
-    position: "relative",
     flexShrink: 0,
-  },
-  logo: {
     width: "60px",
     height: "60px",
-    objectFit: "contain",
-    borderRadius: "12px",
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
-    padding: "8px",
-    zIndex: 2,
-    position: "relative",
+    border: "1px solid #6366f1",
+    padding: "5px",
+    backgroundColor: "#000",
   },
-  logoHalo: {
-    position: "absolute",
-    top: "50%",
-    left: "50%",
-    transform: "translate(-50%, -50%)",
-    width: "80px",
-    height: "80px",
-    borderRadius: "50%",
-    background:
-      "radial-gradient(circle, rgba(96, 165, 250, 0.3) 0%, transparent 70%)",
-    animation: "pulse 3s infinite alternate",
+  logo: {
+    width: "100%",
+    height: "100%",
+    objectFit: "contain",
+    filter: "grayscale(50%)", // Estilo técnico/monocromático
   },
   instituicao: {
     margin: 0,
-    color: "#fff",
+    color: "#06b6d4",
     fontWeight: "700",
-    fontSize: "1.5rem",
-    marginBottom: "0.5rem",
+    fontSize: "1.3rem",
+    marginBottom: "0.25rem",
+    textTransform: "uppercase",
   },
   curso: {
     margin: "0.25rem 0",
-    color: "#93c5fd",
+    color: "#fff",
     fontWeight: "600",
     fontSize: "1.1rem",
   },
@@ -428,9 +543,10 @@ const styles = {
   },
   periodoIcon: {
     fontSize: "1rem",
+    color: "#fcd34d", // Amarelo para energia
   },
   nota: {
-    color: "#fbbf24",
+    color: "#cbd5e1",
     margin: "0.5rem 0",
     fontSize: "0.95rem",
     display: "flex",
@@ -440,11 +556,15 @@ const styles = {
   },
   notaIcon: {
     fontSize: "1rem",
+    color: "#6366f1",
   },
   descricao: {
-    color: "#e2e8f0",
+    color: "#bbb",
     lineHeight: 1.6,
     margin: "1rem 0",
+    borderLeft: "3px solid #10b981", // Barra lateral de log
+    paddingLeft: "10px",
+    fontSize: "0.9rem",
   },
   tagsContainer: {
     display: "flex",
@@ -453,58 +573,13 @@ const styles = {
     marginTop: "1.5rem",
   },
   tag: {
-    backgroundColor: "rgba(96, 165, 250, 0.2)",
-    color: "#93c5fd",
-    borderRadius: "20px",
-    padding: "0.4rem 1rem",
-    fontSize: "0.85rem",
+    backgroundColor: "rgba(6, 182, 212, 0.1)",
+    color: "#06b6d4",
+    borderRadius: "2px",
+    padding: "0.3rem 0.8rem",
+    fontSize: "0.8rem",
     fontWeight: "500",
-    border: "1px solid rgba(96, 165, 250, 0.3)",
+    border: "1px solid rgba(6, 182, 212, 0.3)",
+    textTransform: "uppercase",
   },
 };
-
-// Adicionando os keyframes para as animações
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.7; }
-    }
-    
-    @keyframes gridMove {
-      from {
-        background-position: 0 0;
-      }
-      to {
-        background-position: 50px 50px;
-      }
-    }
-    
-    @keyframes pulseGlow {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.8; }
-    }
-    
-    .formacao-card:hover .card-glow {
-      opacity: 0.6;
-    }
-    
-    @media (max-width: 768px) {
-      .timeline {
-        display: none;
-      }
-      
-      .formacao-card {
-        width: 100% !important;
-        margin-left: 0 !important;
-        margin-right: 0 !important;
-      }
-      
-      .timeline-marker {
-        display: none;
-      }
-    }
-  `;
-  document.head.appendChild(style);
-}

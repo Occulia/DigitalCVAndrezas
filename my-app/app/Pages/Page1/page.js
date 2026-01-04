@@ -1,406 +1,582 @@
 "use client";
-import Menu from "../../components/Menu";
+
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import userPic from "../../images/user.jpg";
+import Menu from "../../components/Menu";
 import Footer from "../../components/Footer";
 
+// --- COMPONENTE VISUAL: DIGITAL RAIN (MATRIX STYLE LITE) ---
+const DigitalRainBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    let width, height;
+
+    const chars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let drops = [];
+    let symbols = [];
+
+    const init = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+
+      const columns = Math.floor(width / 22);
+      drops = [];
+      symbols = [];
+
+      for (let i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -100;
+        symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+      }
+    };
+
+    const animate = () => {
+      // Fundo com rastro controlado (sem blur)
+      ctx.fillStyle = "rgba(5, 5, 5, 0.12)";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.font = "18px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        // Troca de símbolo lenta (sem flicker)
+        if (Math.random() > 0.98) {
+          symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        ctx.fillStyle = Math.random() > 0.97 ? "#ffffff" : "#06b6d4";
+        ctx.fillText(symbols[i], i * 22, drops[i] * 22);
+
+        if (drops[i] * 22 > height && Math.random() > 0.98) {
+          drops[i] = 0;
+        }
+
+        drops[i] += 0.09;
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("resize", init);
+    init();
+    animate();
+
+    return () => window.removeEventListener("resize", init);
+  }, []);
+
+  return <canvas ref={canvasRef} style={styles.canvas} />;
+};
+
+// --- COMPONENTE PRINCIPAL ---
 export default function Perfil() {
   const [mounted, setMounted] = useState(false);
-  const textRef = useRef(null);
-  const containerRef = useRef(null);
+
+  // Estado para efeito de "Hover" nos stats
+  const [hoverStat, setHoverStat] = useState(null);
 
   useEffect(() => {
     setMounted(true);
-
-    // Efeito de partículas
-    const container = containerRef.current;
-    if (!container) return;
-
-    const createParticle = () => {
-      const particle = document.createElement("div");
-      particle.style.position = "absolute";
-      particle.style.width = "4px";
-      particle.style.height = "4px";
-      particle.style.background = "rgba(96, 165, 250, 0.6)";
-      particle.style.boxShadow = "0 0 10px rgba(96, 165, 250, 0.8)";
-      particle.style.borderRadius = "50%";
-      particle.style.zIndex = "0";
-
-      // Posição aleatória
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      particle.style.left = `${x}%`;
-      particle.style.top = `${y}%`;
-
-      container.appendChild(particle);
-
-      // Animação
-      const keyframes = [
-        { transform: "translate(0, 0)", opacity: 0 },
-        {
-          transform: `translate(${Math.random() * 40 - 20}px, ${
-            Math.random() * 40 - 20
-          }px)`,
-          opacity: 1,
-        },
-        {
-          transform: `translate(${Math.random() * 80 - 40}px, ${
-            Math.random() * 80 - 40
-          }px)`,
-          opacity: 0,
-        },
-      ];
-
-      const options = {
-        duration: 3000 + Math.random() * 4000,
-        iterations: Infinity,
-        delay: Math.random() * 2000,
-      };
-
-      particle.animate(keyframes, options);
-    };
-
-    // Criar várias partículas
-    for (let i = 0; i < 20; i++) {
-      createParticle();
-    }
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-        color: "#f0f0f5",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Efeitos de luz de fundo */}
-      <div style={styles.lightEffect1}></div>
-      <div style={styles.lightEffect2}></div>
-      <div style={styles.lightEffect3}></div>
+    <div style={styles.container}>
+      <DigitalRainBackground />
+      <div style={styles.scanline}></div>
 
-      {/* Grade animada */}
-      <div style={styles.gridOverlay}></div>
+      <div style={{ ...styles.contentWrapper, opacity: mounted ? 1 : 0 }}>
+        <Menu />
 
-      <Menu />
+        <main style={styles.main}>
+          {/* HEADER DO PERFIL (TOP CARD) */}
+          <div style={styles.profileHeader}>
+            <div style={styles.imageSection}>
+              <div style={styles.hexFrame}>
+                <Image
+                  src={userPic}
+                  alt="André Dias Rodrigues"
+                  width={180}
+                  height={180}
+                  style={styles.profileImage}
+                />
+                {/* HUD Rings (Anéis rotativos) */}
+                <div style={styles.hudRing1}></div>
+                <div style={styles.hudRing2}></div>
+              </div>
+              <div style={styles.statusBadge}>STATUS: ONLINE</div>
+            </div>
 
-      <main
-        style={{
-          padding: "2rem 1rem",
-          maxWidth: 900,
-          margin: "0 auto",
-          fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-          position: "relative",
-          zIndex: 2,
-        }}
-      >
-        <div
-          style={{
-            ...styles.mainBox,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(30px)",
-            transition: "opacity 1s ease, transform 1s ease",
-          }}
-        >
-          <div style={styles.imageContainer}>
-            <Image
-              src={userPic}
-              alt="André Dias Rodrigues"
-              width={200}
-              height={200}
-              style={{
-                borderRadius: "50%",
-                border: "3px solid #fff",
-                boxShadow: "0 0 25px rgba(96, 165, 250, 0.8)",
-                filter: mounted ? "grayscale(0)" : "grayscale(1)",
-                transition: "all 1s ease 0.5s",
-              }}
-            />
-            {/* Anel animado ao redor da imagem */}
-            <div style={styles.imageRing}></div>
+            <div style={styles.identitySection}>
+              <div style={styles.codeLabel}>{"<IDENTITY_CORE>"}</div>
+              <h1 style={styles.glitchName}>
+                André Dias <span style={{ color: "#06b6d4" }}>Rodrigues</span>
+              </h1>
+              <div style={styles.roleTag}>
+                <span>[CLASS]: FULL-STACK ENGINEER</span>
+              </div>
+              <div style={styles.statsGrid}>
+                {[
+                  { label: "IDADE", val: "24" },
+                  { label: "EXP", val: "ENGENHEIRO INFORMÁTICO" },
+                  { label: "LOC", val: "VISEU, PT" },
+                ].map((stat, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      ...styles.statBox,
+                      borderColor:
+                        hoverStat === idx ? "#06b6d4" : "rgba(255,255,255,0.1)",
+                    }}
+                    onMouseEnter={() => setHoverStat(idx)}
+                    onMouseLeave={() => setHoverStat(null)}
+                  >
+                    <span style={styles.statLabel}>{stat.label}</span>
+                    <span style={styles.statValue}>{stat.val}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <h1
-            style={{
-              ...styles.name,
-              opacity: mounted ? 1 : 0,
-              transform: mounted ? "translateY(0)" : "translateY(20px)",
-              transition: "opacity 1s ease 0.3s, transform 1s ease 0.3s",
-            }}
-          >
-            André Dias Rodrigues
-            {/* Efeito de brilho no nome */}
-            <span style={styles.nameGlow}></span>
-          </h1>
-        </div>
+          {/* ÁREA DE CONTEÚDO (TERMINAL + INFO) */}
+          <div style={styles.dataGrid}>
+            {/* COLUNA DA ESQUERDA: BIOGRAFIA */}
+            <div style={styles.bioTerminal}>
+              <div style={styles.terminalHeader}>
+                <div style={styles.terminalButtons}>
+                  <span style={{ ...styles.dot, background: "#ff5f56" }}></span>
+                  <span style={{ ...styles.dot, background: "#ffbd2e" }}></span>
+                  <span style={{ ...styles.dot, background: "#27c93f" }}></span>
+                </div>
+                <div style={styles.terminalTitle}>user_bio.txt</div>
+              </div>
+              <div style={styles.terminalBody}>
+                <p style={styles.terminalText}>
+                  <span style={styles.cmd}>{">"} source origin_story.sh</span>
+                  <br />
+                  <br />
+                  <span style={styles.comment}>// INICIO DO REGISTO</span>
+                  <br />
+                  Sou André Rodrigues, nascido em Viseu (2000).
+                  <br />
+                  <br />
+                  <span style={styles.comment}>// EDUCAÇÃO</span>
+                  <br />
+                  Init: Curso Profissional Multimédia @ ESEN
+                  <br />
+                  Upgrade: CTeSP Redes e Sistemas @ IPV
+                  <br />
+                  Final: Engenharia Informática @ IPV
+                  <br />
+                  <br />
+                  <span style={styles.comment}>// MISSÃO</span>
+                  <br />
+                  Durante a minha compilação académica, integrei módulos de
+                  Frontend, Backend e Mobile. Foco principal: Análise heurística
+                  e resolução de problemas complexos.
+                  <br />
+                  <br />
+                  <span style={styles.comment}>// SOFT SKILLS</span>
+                  <br />
+                  [x] Proatividade
+                  <br />
+                  [x] Trabalho de Equipa
+                  <br />
+                  [x] Aprendizagem Contínua
+                  <br />
+                  <br />
+                  <span style={styles.blinkingCursor}>_</span>
+                </p>
+              </div>
+            </div>
 
-        <div
-          style={{
-            ...styles.contentBox,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(30px)",
-            transition: "opacity 1s ease 0.6s, transform 1s ease 0.6s",
-          }}
-        >
-          <p style={styles.paragraph} ref={textRef}>
-            🎓 Sou André Rodrigues, nascido em Viseu, em 2000.
-            <br />
-            <br />
-            📚 Concluí o curso profissional de Técnico de Multimédia no ensino
-            secundário, na Escola Secundária Emídio Navarro (ESEN).
-            Posteriormente, finalizei o Curso Técnico Superior Profissional
-            (CTeSP) em Redes e Sistemas Informáticos e o curso de Engenharia
-            Informática no Instituto Politécnico de Viseu (IPV).
-            <br />
-            <br />
-            💡 Ao longo do meu percurso académico, participei em diversos
-            projetos que me permitiram consolidar conhecimentos e explorar novas
-            áreas, com destaque para programação em múltiplas linguagens,
-            análise e resolução de problemas. Sempre procurei novos desafios que
-            contribuíssem para o meu crescimento técnico e profissional.
-            <br />
-            <br />
-            💻 Tenho competências em frontend, backend, gestão de bases de dados
-            e desenvolvimento de aplicações móveis. Sou uma pessoa proativa,
-            sempre disposto a aprender novos conceitos e a partilhar a minha
-            visão, contribuindo para o crescimento coletivo e o sucesso dos
-            projetos em que estou envolvido.
-          </p>
-        </div>
+            {/* COLUNA DA DIREITA: CONTACTOS (UPLINKS) */}
+            <div style={styles.uplinkSection}>
+              <h3 style={styles.sectionTitle}>{"<COMM_UPLINKS />"}</h3>
 
-        <div
-          style={{
-            ...styles.contacts,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(30px)",
-            transition: "opacity 1s ease 0.9s, transform 1s ease 0.9s",
-          }}
-        >
-          <div style={styles.contactItem}>
-            <span style={styles.contactIcon}>📍</span>
-            <span>Localização: Viseu, Portugal</span>
+              {[
+                {
+                  icon: "📍",
+                  label: "BASE_LOC",
+                  value: "Viseu, Portugal",
+                  link: null,
+                },
+                {
+                  icon: "📞",
+                  label: "VOICE_COM",
+                  value: "964 173 665",
+                  link: "tel:+351964173665",
+                },
+                {
+                  icon: "📧",
+                  label: "EMAIL_NET",
+                  value: "andre.rodrigues305@gmail.com",
+                  link: "mailto:andre.rodrigues305@gmail.com",
+                },
+                {
+                  icon: "🌐",
+                  label: "LINKED_DB",
+                  value: "Perfil LinkedIn",
+                  link: "https://www.linkedin.com/in/andr%C3%A9-rodrigues-99822617a/",
+                },
+              ].map((contact, i) => (
+                <a
+                  key={i}
+                  href={contact.link || "#"}
+                  target={contact.link ? "_blank" : "_self"}
+                  style={{
+                    ...styles.uplinkCard,
+                    pointerEvents: contact.link ? "all" : "none",
+                  }}
+                  className="uplink-card"
+                >
+                  <div style={styles.uplinkIconBox}>{contact.icon}</div>
+                  <div style={styles.uplinkInfo}>
+                    <span style={styles.uplinkLabel}>{contact.label}</span>
+                    <span style={styles.uplinkValue}>{contact.value}</span>
+                  </div>
+                  <div style={styles.uplinkDecor}></div>
+                </a>
+              ))}
+            </div>
           </div>
-          <div style={styles.contactItem}>
-            <span style={styles.contactIcon}>📞</span>
-            <span>Número: 964173665</span>
-          </div>
-          <div style={styles.contactItem}>
-            <span style={styles.contactIcon}>📧</span>
-            <span>
-              Email:{" "}
-              <a
-                href="mailto:andre.rodrigues305@gmail.com"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                andre.rodrigues305@gmail.com
-              </a>
-            </span>
-          </div>
-          <div style={styles.contactItem}>
-            <span style={styles.contactIcon}>🌐</span>
-            <span>
-              LinkedIn:{" "}
-              <a
-                href="https://www.linkedin.com/in/andr%C3%A9-rodrigues-99822617a/"
-                target="_blank"
-                rel="noopener noreferrer"
-                style={styles.link}
-              >
-                André Dias Rodrigues
-              </a>
-            </span>
-          </div>
-        </div>
-      </main>
-      <Footer />
+        </main>
+        <Footer />
+      </div>
+
+      {/* ESTILOS GLOBAIS PARA ANIMAÇÕES */}
+      <style jsx global>{`
+        @keyframes scanline {
+          0% {
+            top: -10%;
+            opacity: 0;
+          }
+          50% {
+            opacity: 1;
+          }
+          100% {
+            top: 110%;
+            opacity: 0;
+          }
+        }
+        @keyframes spin {
+          0% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+        }
+        @keyframes spin-rev {
+          0% {
+            transform: translate(-50%, -50%) rotate(360deg);
+          }
+          100% {
+            transform: translate(-50%, -50%) rotate(0deg);
+          }
+        }
+        @keyframes blink {
+          0%,
+          100% {
+            opacity: 1;
+          }
+          50% {
+            opacity: 0;
+          }
+        }
+        .uplink-card:hover {
+          transform: translateX(10px);
+          background: rgba(6, 182, 212, 0.15) !important;
+          border-color: #06b6d4 !important;
+        }
+        .uplink-card:hover .uplinkDecor {
+          background: #06b6d4;
+          box-shadow: 0 0 10px #06b6d4;
+        }
+      `}</style>
     </div>
   );
 }
 
 const styles = {
-  lightEffect1: {
-    position: "absolute",
-    top: "10%",
-    left: "10%",
-    width: "300px",
-    height: "300px",
-    background:
-      "radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 8s infinite alternate",
-    zIndex: 0,
+  container: {
+    minHeight: "100vh",
+    position: "relative",
+    background: "#0a0a0a",
+    color: "#e0e0e0",
+    fontFamily: "'Courier New', monospace", // Fonte Tech
+    overflowX: "hidden",
   },
-  lightEffect2: {
-    position: "absolute",
-    top: "60%",
-    right: "15%",
-    width: "400px",
-    height: "400px",
-    background:
-      "radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 12s infinite alternate-reverse",
-    zIndex: 0,
-  },
-  lightEffect3: {
-    position: "absolute",
-    bottom: "15%",
-    left: "20%",
-    width: "250px",
-    height: "250px",
-    background:
-      "radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 10s infinite alternate",
-    zIndex: 0,
-  },
-  gridOverlay: {
-    position: "absolute",
+  canvas: {
+    position: "fixed",
     top: 0,
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundImage: `
-      linear-gradient(rgba(18, 25, 50, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(18, 25, 50, 0.3) 1px, transparent 1px)
-    `,
-    backgroundSize: "50px 50px",
     zIndex: 0,
-    animation: "gridMove 20s infinite linear",
+    opacity: 0.4, // Suave para não distrair
   },
-  mainBox: {
+  scanline: {
+    position: "fixed",
+    left: 0,
+    width: "100%",
+    height: "5px",
+    background: "rgba(6, 182, 212, 0.5)",
+    boxShadow: "0 0 15px rgba(6, 182, 212, 0.8)",
+    zIndex: 2,
+    animation: "scanline 6s infinite linear",
+    pointerEvents: "none",
+  },
+  contentWrapper: {
+    position: "relative",
+    zIndex: 10,
+    transition: "opacity 1.5s ease",
+    display: "flex",
+    flexDirection: "column",
+    minHeight: "100vh",
+  },
+  main: {
+    flex: 1,
+    maxWidth: "1100px",
+    margin: "0 auto",
+    padding: "4rem 2rem",
+    width: "100%",
+  },
+  // --- HEADER SECTION ---
+  profileHeader: {
     display: "flex",
     flexWrap: "wrap",
+    gap: "3rem",
     alignItems: "center",
-    gap: "1.5rem",
-    marginBottom: "2rem",
+    marginBottom: "4rem",
+    background: "rgba(20, 20, 25, 0.6)",
+    backdropFilter: "blur(10px)",
+    padding: "2rem",
+    borderRadius: "2px",
+    borderLeft: "4px solid #06b6d4",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.5)",
+  },
+  imageSection: {
+    position: "relative",
+    width: "200px",
+    height: "200px",
+    display: "flex",
     justifyContent: "center",
-    textAlign: "center",
+    alignItems: "center",
   },
-  imageContainer: {
+  hexFrame: {
+    width: "100%",
+    height: "100%",
     position: "relative",
-    display: "inline-block",
   },
-  imageRing: {
-    position: "absolute",
-    top: "-10px",
-    left: "-10px",
-    right: "-10px",
-    bottom: "-10px",
+  profileImage: {
     borderRadius: "50%",
-    border: "2px solid transparent",
-    borderTop: "2px solid #60a5fa",
-    animation: "spin 3s linear infinite",
-  },
-  name: {
-    fontSize: "clamp(2rem, 5vw, 3.5rem)",
-    fontWeight: "700",
-    color: "#fff",
-    flex: "1 1 250px",
-    minWidth: 200,
-    textShadow: "0 0 15px rgba(96, 165, 250, 0.5)",
+    border: "2px solid rgba(255,255,255,0.1)",
+    filter: "grayscale(20%) contrast(1.2)",
+    zIndex: 2,
     position: "relative",
-    display: "inline-block",
   },
-  nameGlow: {
+  hudRing1: {
     position: "absolute",
-    top: "0",
-    left: "0",
-    right: "0",
-    bottom: "0",
-    borderRadius: "10px",
-    boxShadow: "0 0 30px rgba(96, 165, 250, 0.8)",
-    opacity: 0,
-    animation: "pulseGlow 2s infinite alternate",
-    zIndex: -1,
+    top: "50%",
+    left: "50%",
+    width: "210px",
+    height: "210px",
+    border: "2px dashed #06b6d4",
+    borderRadius: "50%",
+    animation: "spin 10s linear infinite",
+    zIndex: 1,
   },
-  contentBox: {
-    backgroundColor: "rgba(17, 25, 40, 0.7)",
-    backdropFilter: "blur(10px)",
-    padding: "2rem",
-    borderRadius: "16px",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-    border: "1px solid rgba(96, 165, 250, 0.2)",
-    marginBottom: "2rem",
+  hudRing2: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    width: "190px",
+    height: "190px",
+    border: "1px solid rgba(99, 102, 241, 0.5)",
+    borderLeft: "transparent",
+    borderRight: "transparent",
+    borderRadius: "50%",
+    animation: "spin-rev 15s linear infinite",
+    zIndex: 1,
   },
-  paragraph: {
-    fontSize: "1.15rem",
-    lineHeight: "1.7",
-    color: "#e0e0e5",
+  statusBadge: {
+    position: "absolute",
+    bottom: "-15px",
+    left: "50%",
+    transform: "translateX(-50%)",
+    background: "#000",
+    border: "1px solid #10b981",
+    color: "#10b981",
+    padding: "4px 12px",
+    fontSize: "0.7rem",
+    fontWeight: "bold",
+    letterSpacing: "2px",
+    zIndex: 5,
+    boxShadow: "0 0 10px rgba(16, 185, 129, 0.3)",
   },
-  contacts: {
-    marginTop: "2.5rem",
-    backgroundColor: "rgba(17, 25, 40, 0.7)",
-    backdropFilter: "blur(10px)",
-    padding: "2rem",
-    borderRadius: "16px",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
-    border: "1px solid rgba(96, 165, 250, 0.2)",
+  identitySection: {
+    flex: 1,
   },
-  contactItem: {
-    fontSize: "1.1rem",
-    marginBottom: "1.2rem",
-    color: "#ddd",
+  codeLabel: {
+    color: "#6366f1",
+    fontSize: "0.8rem",
+    marginBottom: "0.5rem",
+    opacity: 0.8,
+  },
+  glitchName: {
+    fontSize: "clamp(2rem, 4vw, 3rem)",
+    fontWeight: "800",
+    color: "#fff",
+    margin: "0 0 1rem 0",
+    textTransform: "uppercase",
+    letterSpacing: "-1px",
+    textShadow: "2px 2px 0px rgba(99, 102, 241, 0.4)",
+  },
+  roleTag: {
+    display: "inline-block",
+    background: "rgba(6, 182, 212, 0.1)",
+    color: "#06b6d4",
+    padding: "5px 10px",
+    fontSize: "0.9rem",
+    marginBottom: "1.5rem",
+    border: "1px solid rgba(6, 182, 212, 0.3)",
+  },
+  statsGrid: {
+    display: "flex",
+    gap: "1rem",
+    flexWrap: "wrap",
+  },
+  statBox: {
+    background: "rgba(0,0,0,0.3)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    padding: "0.5rem 1rem",
+    minWidth: "80px",
+    transition: "all 0.3s ease",
+  },
+  statLabel: {
+    display: "block",
+    fontSize: "0.7rem",
+    color: "#888",
+    marginBottom: "2px",
+  },
+  statValue: {
+    fontSize: "1rem",
+    fontWeight: "bold",
+    color: "#eee",
+  },
+
+  // --- DATA GRID SECTION ---
+  dataGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: "2rem",
+  },
+  bioTerminal: {
+    background: "#0f0f12",
+    borderRadius: "6px",
+    boxShadow: "0 10px 40px rgba(0,0,0,0.4)",
+    border: "1px solid #333",
+    overflow: "hidden",
+  },
+  terminalHeader: {
+    background: "#1a1a1d",
+    padding: "10px 15px",
     display: "flex",
     alignItems: "center",
-    gap: "0.8rem",
-    transition: "transform 0.3s ease",
+    borderBottom: "1px solid #333",
   },
-  contactIcon: {
-    fontSize: "1.3rem",
-    filter: "drop-shadow(0 0 3px rgba(96, 165, 250, 0.8))",
+  terminalButtons: {
+    display: "flex",
+    gap: "6px",
+    marginRight: "15px",
   },
-  link: {
-    color: "#60a5fa",
+  dot: {
+    width: "10px",
+    height: "10px",
+    borderRadius: "50%",
+  },
+  terminalTitle: {
+    fontSize: "0.8rem",
+    color: "#888",
+  },
+  terminalBody: {
+    padding: "1.5rem",
+    fontFamily: "'Courier New', monospace", // Garante fonte mono
+  },
+  terminalText: {
+    fontSize: "0.95rem",
+    lineHeight: "1.6",
+    color: "#bbb",
+    margin: 0,
+  },
+  cmd: { color: "#10b981", fontWeight: "bold" },
+  comment: { color: "#6366f1", display: "inline-block", marginTop: "10px" },
+  blinkingCursor: {
+    display: "inline-block",
+    width: "8px",
+    height: "15px",
+    background: "#06b6d4",
+    animation: "blink 1s infinite",
+    verticalAlign: "middle",
+    marginLeft: "5px",
+  },
+
+  // --- UPLINKS SECTION ---
+  uplinkSection: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem",
+  },
+  sectionTitle: {
+    fontSize: "1.2rem",
+    color: "#fff",
+    marginBottom: "1rem",
+    borderBottom: "1px solid #333",
+    paddingBottom: "10px",
+  },
+  uplinkCard: {
+    display: "flex",
+    alignItems: "center",
+    background: "rgba(255,255,255,0.03)",
+    padding: "1rem",
+    border: "1px solid rgba(255,255,255,0.05)",
     textDecoration: "none",
-    fontWeight: "600",
     transition: "all 0.3s ease",
-    textShadow: "0 0 5px rgba(96, 165, 250, 0.5)",
+    position: "relative",
+    overflow: "hidden",
+  },
+  uplinkIconBox: {
+    fontSize: "1.5rem",
+    marginRight: "1rem",
+    width: "40px",
+    textAlign: "center",
+  },
+  uplinkInfo: {
+    display: "flex",
+    flexDirection: "column",
+  },
+  uplinkLabel: {
+    fontSize: "0.7rem",
+    color: "#666",
+    letterSpacing: "1px",
+    marginBottom: "2px",
+  },
+  uplinkValue: {
+    color: "#fff",
+    fontSize: "1rem",
+  },
+  uplinkDecor: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    bottom: 0,
+    width: "3px",
+    background: "transparent",
+    transition: "all 0.3s ease",
   },
 };
-
-// Adicionando os keyframes para as animações
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.7; }
-    }
-    
-    @keyframes gridMove {
-      from {
-        background-position: 0 0;
-      }
-      to {
-        background-position: 50px 50px;
-      }
-    }
-    
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-    
-    @keyframes pulseGlow {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.8; }
-    }
-    
-    .contactItem:hover {
-      transform: translateX(10px);
-    }
-    
-    .link:hover {
-      color: #93c5fd;
-      text-shadow: 0 0 10px rgba(96, 165, 250, 0.8);
-    }
-  `;
-  document.head.appendChild(style);
-}

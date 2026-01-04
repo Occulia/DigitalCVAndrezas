@@ -1,235 +1,408 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import React, { useEffect, useRef, useState } from "react";
-import BackgroundImage from "../app/images/bc.jpg";
-import Menu from "./components/Menu";
+import Menu from "./components/Menu"; // Mantém os teus componentes
 import Footer from "./components/Footer";
 
+// --- COMPONENTE VISUAL: O MUNDO DIGITAL (CANVAS) ---
+
+const TechWorldBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    let width, height;
+    let particles = [];
+    let globeAngle = 0;
+
+    const init = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+      createParticles();
+    };
+
+    const createParticles = () => {
+      particles = [];
+      // Cria pontos para formar o globo
+      // Reduzi ligeiramente o raio (0.35 -> 0.3) para garantir margem em ecrãs pequenos
+      const globeRadius = Math.min(width, height) * 0.3;
+
+      for (let i = 0; i < 600; i++) {
+        const theta = Math.random() * 2 * Math.PI;
+        const phi = Math.acos(Math.random() * 2 - 1);
+
+        particles.push({
+          theta,
+          phi,
+          r: globeRadius,
+          size: Math.random() * 2,
+        });
+      }
+    };
+
+    const animate = () => {
+      if (!canvas) return; // Segurança extra
+
+      ctx.fillStyle = "#050505";
+      ctx.fillRect(0, 0, width, height);
+
+      // Efeito de grade
+      ctx.strokeStyle = "rgba(0, 255, 255, 0.03)";
+      ctx.lineWidth = 1;
+      const gridSize = 50;
+      const offset = (Date.now() / 50) % gridSize;
+
+      for (let x = 0; x < width; x += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, height);
+        ctx.stroke();
+      }
+      for (let y = 0; y < height; y += gridSize) {
+        ctx.beginPath();
+        ctx.moveTo(0, y + offset);
+        ctx.lineTo(width, y + offset);
+        ctx.stroke();
+      }
+
+      ctx.save();
+      ctx.translate(width / 2, height / 2);
+
+      globeAngle += 0.002;
+
+      // Aumentei o FOV (Field of View) para evitar que partículas fiquem "atrás" da câmara
+      // Isto previne o erro de raio negativo
+      const fov = 1000;
+
+      particles.forEach((p) => {
+        // Rotação 3D
+        const x3d = p.r * Math.sin(p.phi) * Math.cos(p.theta + globeAngle);
+        const z3d = p.r * Math.sin(p.phi) * Math.sin(p.theta + globeAngle);
+        const y3d = p.r * Math.cos(p.phi);
+
+        // Projeção de Perspetiva (A matemática que estava a dar erro)
+        // O denominador (fov - z3d) nunca deve ser zero ou negativo para objetos visíveis
+        const scale = fov / (fov - z3d);
+
+        // CORREÇÃO CRÍTICA: Se a escala for negativa (objeto atrás da câmara), ignorar.
+        if (scale <= 0) return;
+
+        const px = x3d * scale;
+        const py = y3d * scale;
+
+        // Desenhar Partícula
+        const alpha = (z3d + p.r) / (2 * p.r);
+        // Garantir que o raio (3º argumento) é sempre positivo com Math.max
+        const radius = Math.max(0, p.size * scale);
+
+        if (alpha > 0 && radius > 0) {
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(99, 102, 241, ${alpha})`;
+          ctx.arc(px, py, radius, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Desenhar conexões (Optimizado)
+        // Apenas desenhamos linhas se a partícula estiver na frente (z3d > 0) para poupar processamento
+        if (z3d > 0) {
+          particles.forEach((p2) => {
+            // Cálculo simplificado de distância para performance
+            // Não precisamos da distância 3D exata, apenas uma aproximação angular é suficiente aqui
+            // Mas mantemos a lógica original com verificação de segurança
+            const dx =
+              x3d - p2.r * Math.sin(p2.phi) * Math.cos(p2.theta + globeAngle);
+            const dy = y3d - p2.r * Math.cos(p2.phi);
+            const dist = Math.sqrt(dx * dx + dy * dy);
+
+            if (dist < 30) {
+              const z3d2 =
+                p2.r * Math.sin(p2.phi) * Math.sin(p2.theta + globeAngle);
+              const scale2 = fov / (fov - z3d2);
+
+              if (scale2 > 0) {
+                const px2 =
+                  p2.r *
+                  Math.sin(p2.phi) *
+                  Math.cos(p2.theta + globeAngle) *
+                  scale2;
+                const py2 = p2.r * Math.cos(p2.phi) * scale2;
+
+                ctx.beginPath();
+                ctx.strokeStyle = `rgba(6, 182, 212, ${0.15})`;
+                ctx.moveTo(px, py);
+                ctx.lineTo(px2, py2);
+                ctx.stroke();
+              }
+            }
+          });
+        }
+      });
+
+      ctx.restore();
+      requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("resize", init);
+    init();
+    animate();
+
+    return () => window.removeEventListener("resize", init);
+  }, []);
+
+  return <canvas ref={canvasRef} style={styles.canvas} />;
+};
+
+// --- COMPONENTE PRINCIPAL ---
 export default function Home() {
   const router = useRouter();
-  const [mounted, setMounted] = useState(false);
-  const containerRef = useRef(null);
-  const cardsRef = useRef([]);
+  const [bootSequence, setBootSequence] = useState(0); // 0: Start, 1: Loading, 2: Complete
+  const [textIndex, setTextIndex] = useState(0);
+
+  // Textos para o efeito de "Hack" / Boot
+  const loadingTexts = [
+    "INITIALIZING CORE SYSTEMS...",
+    "CONNECTING TO GLOBAL NETWORK...",
+    "LOADING USER PROFILE DATA...",
+    "ACCESS GRANTED.",
+  ];
 
   // Dados para os cards
   const cards = [
     {
-      title: "👨‍🎓 Ver Perfil",
-      description: "Conheça minha trajetória profissional",
+      title: "PERFIL",
+      icon: "👨‍🎓",
+      desc: "DADOS DE TRAJETÓRIA",
       path: "/Pages/Page1",
-      color: "#6366f1", // Índigo
+      color: "#6366f1",
     },
     {
-      title: "🛠️ Ver Projetos",
-      description: "Explore meus trabalhos e projetos",
+      title: "PROJETOS",
+      icon: "🛠️",
+      desc: "ARQUIVOS DE DESENVOLVIMENTO",
       path: "/Pages/Page2",
-      color: "#06b6d4", // Ciano
+      color: "#06b6d4",
     },
     {
-      title: "📄 Ver Certificados",
-      description: "Minhas certificações e qualificações",
+      title: "CERTIFICADOS",
+      icon: "📄",
+      desc: "CREDENCIAIS VERIFICADAS",
       path: "/Pages/Page3",
-      color: "#10b981", // Esmeralda
+      color: "#10b981",
     },
     {
-      title: "🎓 Formação Académica",
-      description: "Minha jornada educacional",
+      title: "ACADÉMICO",
+      icon: "🎓",
+      desc: "DATABASE EDUCACIONAL",
       path: "/Pages/Page4",
-      color: "#f59e0b", // Âmbar
+      color: "#f59e0b",
     },
   ];
 
+  // Efeito de Boot Sequencial
   useEffect(() => {
-    setMounted(true);
-
-    // Efeito de partículas
-    const container = containerRef.current;
-    if (!container) return;
-
-    const createParticle = () => {
-      const particle = document.createElement("div");
-      particle.style.position = "absolute";
-      particle.style.width = "4px";
-      particle.style.height = "4px";
-      particle.style.background = "rgba(96, 165, 250, 0.6)";
-      particle.style.boxShadow = "0 0 10px rgba(96, 165, 250, 0.8)";
-      particle.style.borderRadius = "50%";
-      particle.style.zIndex = "0";
-
-      // Posição aleatória
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      particle.style.left = `${x}%`;
-      particle.style.top = `${y}%`;
-
-      container.appendChild(particle);
-
-      // Animação
-      const keyframes = [
-        { transform: "translate(0, 0)", opacity: 0 },
-        {
-          transform: `translate(${Math.random() * 40 - 20}px, ${
-            Math.random() * 40 - 20
-          }px)`,
-          opacity: 1,
-        },
-        {
-          transform: `translate(${Math.random() * 80 - 40}px, ${
-            Math.random() * 80 - 40
-          }px)`,
-          opacity: 0,
-        },
-      ];
-
-      const options = {
-        duration: 3000 + Math.random() * 4000,
-        iterations: Infinity,
-        delay: Math.random() * 2000,
-      };
-
-      particle.animate(keyframes, options);
-    };
-
-    // Criar várias partículas
-    for (let i = 0; i < 20; i++) {
-      createParticle();
+    // Passo 1: Textos de carregamento
+    if (textIndex < loadingTexts.length) {
+      const timeout = setTimeout(() => {
+        setTextIndex((prev) => prev + 1);
+      }, 600);
+      return () => clearTimeout(timeout);
     }
-  }, []);
+    // Passo 2: Finalizar boot
+    else if (bootSequence === 0) {
+      setTimeout(() => setBootSequence(1), 500);
+      setTimeout(() => setBootSequence(2), 1500); // Revelar site
+    }
+  }, [textIndex, bootSequence]);
 
   return (
-    <div style={styles.container} ref={containerRef}>
-      <Image
-        src={BackgroundImage}
-        alt="Background"
-        fill
-        priority
-        quality={80}
+    <div style={styles.container}>
+      <TechWorldBackground />
+
+      {/* OVERLAY DE BOOT (Introdução) */}
+      <div
         style={{
-          position: "absolute",
-          objectFit: "cover",
-          zIndex: -1,
-          opacity: 0.7,
+          ...styles.bootOverlay,
+          opacity: bootSequence === 2 ? 0 : 1,
+          pointerEvents: bootSequence === 2 ? "none" : "all",
         }}
-      />
-
-      {/* Efeito de gradiente sobre a imagem */}
-      <div style={styles.gradientOverlay}></div>
-
-      {/* Efeito de grade futurista */}
-      <div style={styles.gridOverlay}></div>
-
-      <Menu />
-
-      <main style={styles.main}>
-        <div
-          style={{
-            ...styles.hero,
-            opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "opacity 1s ease, transform 1s ease",
-          }}
-        >
-          <h1 style={styles.heroTitle}>
-            <span style={styles.titleWord}>Desenvolvedor</span>
-            <span style={{ ...styles.titleWord, ...styles.accentWord }}>
-              {" "}
-              Full-Stack
-            </span>
-          </h1>
-          <p style={styles.heroSubtitle}>
-            Transformando ideias em soluções digitais inovadoras
-          </p>
-        </div>
-
-        <div style={styles.cardsContainer}>
-          {cards.map((card, index) => (
-            <div
-              key={index}
-              ref={(el) => (cardsRef.current[index] = el)}
-              style={{
-                ...styles.card,
-                opacity: mounted ? 1 : 0,
-                transform: mounted ? "translateY(0)" : "translateY(30px)",
-                transition: `opacity 0.8s ease ${
-                  index * 0.2
-                }s, transform 0.8s ease ${index * 0.2}s, box-shadow 0.3s ease`,
-                border: `1px solid ${card.color}20`,
-              }}
-              onClick={() => router.push(card.path)}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.boxShadow = `0 0 25px ${card.color}80`;
-                e.currentTarget.style.transform = "translateY(-10px)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.boxShadow =
-                  "0 8px 32px rgba(0, 0, 0, 0.3)";
-                e.currentTarget.style.transform = "translateY(0)";
-              }}
-            >
-              <div
-                style={{
-                  ...styles.cardIcon,
-                  background: `linear-gradient(135deg, ${card.color}30, ${card.color}10)`,
-                  border: `1px solid ${card.color}30`,
-                }}
-              >
-                <span
-                  style={{
-                    filter: "drop-shadow(0 0 5px rgba(255,255,255,0.5))",
-                  }}
-                >
-                  {card.title.split(" ")[0]}
-                </span>
-              </div>
-              <h3 style={{ ...styles.cardTitle, color: card.color }}>
-                {card.title.split(" ").slice(1).join(" ")}
-              </h3>
-              <p style={styles.cardDescription}>{card.description}</p>
-              <div style={styles.cardHoverEffect}></div>
+      >
+        <div style={styles.terminalLoader}>
+          {loadingTexts.slice(0, textIndex).map((text, i) => (
+            <div key={i} style={styles.terminalLine}>
+              <span style={{ color: "#10b981" }}>{`>`}</span> {text}
             </div>
           ))}
+          <div style={styles.blinkingCursor}>_</div>
         </div>
-      </main>
-      <Footer />
+      </div>
+
+      <div
+        style={{
+          ...styles.contentWrapper,
+          opacity: bootSequence === 2 ? 1 : 0,
+          transform: bootSequence === 2 ? "scale(1)" : "scale(1.1)",
+          filter: bootSequence === 2 ? "blur(0px)" : "blur(10px)",
+        }}
+      >
+        <Menu />
+
+        <main style={styles.main}>
+          {/* SECÇÃO HERO FUTURISTA */}
+          <div style={styles.heroSection}>
+            <div style={styles.hologramCircle}></div>
+            <h1 style={styles.glitchTitle} data-text="FULL-STACK DEV">
+              FULL-STACK <span style={{ color: "#06b6d4" }}>DEV</span>
+            </h1>
+            <p style={styles.heroSubtitle}>
+              [SYSTEM: ONLINE] :: TRANSFORMAÇÃO DE IDEIAS EM CÓDIGO ::
+            </p>
+          </div>
+
+          {/* GRID DE CARTÕES HOLOGRÁFICOS */}
+          <div style={styles.grid}>
+            {cards.map((card, i) => (
+              <div
+                key={i}
+                style={{
+                  ...styles.card,
+                  animationDelay: `${i * 0.1 + 1.5}s`,
+                  borderColor: card.color,
+                }}
+                onClick={() => router.push(card.path)}
+                className="tech-card"
+              >
+                <div style={styles.cardGlow} className="glow"></div>
+                <div style={styles.cardHeader}>
+                  <span style={styles.cardIcon}>{card.icon}</span>
+                  <div style={styles.cardDecor}></div>
+                </div>
+                <h2 style={{ ...styles.cardTitle, color: card.color }}>
+                  {card.title}
+                </h2>
+                <p style={styles.cardDesc}>{card.desc}</p>
+                <div style={styles.cardFooter}>
+                  <span>STATUS: READY</span>
+                  <span style={{ color: card.color }}>{`>>>`}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </main>
+
+        <Footer />
+      </div>
+
+      {/* INJECTAR ESTILOS GLOBAIS PARA ANIMAÇÕES COMPLEXAS */}
+      <style jsx global>{`
+        @keyframes scanline {
+          0% {
+            transform: translateY(-100%);
+          }
+          100% {
+            transform: translateY(100%);
+          }
+        }
+        @keyframes glitch {
+          0% {
+            transform: translate(0);
+          }
+          20% {
+            transform: translate(-2px, 2px);
+          }
+          40% {
+            transform: translate(-2px, -2px);
+          }
+          60% {
+            transform: translate(2px, 2px);
+          }
+          80% {
+            transform: translate(2px, -2px);
+          }
+          100% {
+            transform: translate(0);
+          }
+        }
+        @keyframes pulse {
+          0% {
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0.4);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(6, 182, 212, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(6, 182, 212, 0);
+          }
+        }
+
+        .tech-card:hover {
+          transform: translateY(-10px) scale(1.02);
+          background: rgba(20, 30, 60, 0.8);
+          box-shadow: 0 0 30px rgba(6, 182, 212, 0.3),
+            inset 0 0 20px rgba(6, 182, 212, 0.1);
+        }
+        .tech-card:hover .glow {
+          opacity: 1;
+        }
+      `}</style>
     </div>
   );
 }
 
+// --- ESTILOS CSS-IN-JS ---
 const styles = {
   container: {
+    position: "relative",
+    minHeight: "100vh",
+    background: "#050505",
+    color: "#fff",
+    fontFamily: "'Courier New', Courier, monospace", // Fonte estilo código
+    overflowX: "hidden",
+  },
+  canvas: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100%",
+    height: "100%",
+    zIndex: 0,
+  },
+  bootOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    width: "100vw",
+    height: "100vh",
+    background: "#000",
+    zIndex: 9999,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "opacity 1s ease",
+  },
+  terminalLoader: {
+    width: "300px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+  },
+  terminalLine: {
+    marginBottom: "8px",
+    color: "#e2e8f0",
+    textShadow: "0 0 5px rgba(255,255,255,0.5)",
+  },
+  blinkingCursor: {
+    color: "#10b981",
+    animation: "pulse 1s infinite",
+  },
+  contentWrapper: {
+    position: "relative",
+    zIndex: 1,
     minHeight: "100vh",
     display: "flex",
     flexDirection: "column",
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    position: "relative",
-    overflow: "hidden",
-    color: "#ffffff",
-  },
-  gradientOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    background:
-      "linear-gradient(to bottom, rgba(10, 15, 30, 0.9), rgba(20, 30, 60, 0.8))",
-    zIndex: -1,
-  },
-  gridOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: "100%",
-    height: "100%",
-    backgroundImage: `
-      linear-gradient(rgba(18, 25, 50, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(18, 25, 50, 0.3) 1px, transparent 1px)
-    `,
-    backgroundSize: "50px 50px",
-    zIndex: -1,
-    animation: "gridMove 20s infinite linear",
+    transition: "all 1.5s cubic-bezier(0.19, 1, 0.22, 1)",
   },
   main: {
     flex: 1,
@@ -237,133 +410,110 @@ const styles = {
     flexDirection: "column",
     alignItems: "center",
     justifyContent: "center",
-    padding: "2rem 5%",
+    padding: "4rem 2rem",
+  },
+  heroSection: {
     textAlign: "center",
+    marginBottom: "5rem",
     position: "relative",
-    zIndex: 1,
   },
-  hero: {
-    marginBottom: "3rem",
-    maxWidth: "800px",
+  hologramCircle: {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "300px",
+    height: "300px",
+    border: "1px dashed rgba(6, 182, 212, 0.3)",
+    borderRadius: "50%",
+    animation: "pulse 4s infinite linear",
+    zIndex: -1,
   },
-  heroTitle: {
-    fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
-    fontWeight: "800",
-    marginBottom: "1.5rem",
-    color: "#ffffff",
-    lineHeight: 1.2,
-    textShadow: "0 0 15px rgba(96, 165, 250, 0.5)",
-    display: "flex",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: "0.5rem",
-  },
-  titleWord: {
-    opacity: 0,
-    animation: "fadeInUp 1s forwards",
-  },
-  accentWord: {
-    color: "#60a5fa",
-    animationDelay: "0.3s",
+  glitchTitle: {
+    fontSize: "clamp(3rem, 6vw, 5rem)",
+    fontWeight: "900",
+    letterSpacing: "-2px",
+    textShadow: "2px 2px 0px #6366f1, -2px -2px 0px #06b6d4",
+    marginBottom: "1rem",
+    position: "relative",
   },
   heroSubtitle: {
-    fontSize: "clamp(1.1rem, 2.5vw, 1.4rem)",
-    color: "#cbd5e1",
-    margin: 0,
-    fontWeight: "400",
-    opacity: 0,
-    animation: "fadeInUp 1s 0.5s forwards",
+    fontSize: "1rem",
+    color: "#94a3b8",
+    letterSpacing: "3px",
+    background: "rgba(0,0,0,0.5)",
+    padding: "5px 15px",
+    borderLeft: "2px solid #06b6d4",
+    borderRight: "2px solid #06b6d4",
   },
-  cardsContainer: {
+  grid: {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
     gap: "2rem",
     width: "100%",
-    maxWidth: "1200px",
+    maxWidth: "1400px",
   },
   card: {
-    backgroundColor: "rgba(30, 41, 59, 0.7)",
-    borderRadius: "16px",
-    padding: "2.5rem 2rem",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+    background: "rgba(10, 15, 30, 0.6)",
+    backdropFilter: "blur(12px)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
+    borderRadius: "0px", // Cantos retos para estilo tech
+    padding: "2rem",
     cursor: "pointer",
-    transition: "all 0.3s ease, transform 0.5s ease",
-    textAlign: "center",
-    backdropFilter: "blur(10px)",
+    transition: "all 0.4s ease",
     position: "relative",
     overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    clipPath: "polygon(0 0, 100% 0, 100% 85%, 90% 100%, 0 100%)", // Recorte futurista no canto
+  },
+  cardHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    marginBottom: "1.5rem",
   },
   cardIcon: {
-    fontSize: "2.5rem",
-    width: "80px",
-    height: "80px",
-    borderRadius: "50%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    margin: "0 auto 1.5rem",
-    transition: "all 0.3s ease",
+    fontSize: "2rem",
+    filter: "drop-shadow(0 0 10px rgba(255,255,255,0.3))",
+  },
+  cardDecor: {
+    width: "40px",
+    height: "40px",
+    borderTop: "2px solid rgba(255,255,255,0.2)",
+    borderRight: "2px solid rgba(255,255,255,0.2)",
   },
   cardTitle: {
-    fontSize: "1.5rem",
-    fontWeight: "700",
-    margin: "0 0 1rem 0",
-    transition: "all 0.3s ease",
+    fontSize: "1.8rem",
+    fontWeight: "bold",
+    marginBottom: "0.5rem",
+    textTransform: "uppercase",
   },
-  cardDescription: {
-    fontSize: "1.1rem",
-    color: "#e2e8f0",
-    margin: 0,
-    lineHeight: 1.5,
+  cardDesc: {
+    color: "#cbd5e1",
+    fontSize: "0.9rem",
+    marginBottom: "2rem",
+    lineHeight: "1.6",
   },
-  cardHoverEffect: {
+  cardFooter: {
+    marginTop: "auto",
+    display: "flex",
+    justifyContent: "space-between",
+    fontSize: "0.75rem",
+    color: "#64748b",
+    fontFamily: "monospace",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
+    paddingTop: "1rem",
+  },
+  cardGlow: {
     position: "absolute",
-    bottom: 0,
+    top: 0,
     left: 0,
     width: "100%",
-    height: "4px",
-    background: "linear-gradient(90deg, #60a5fa, #6366f1, #06b6d4)",
-    transform: "scaleX(0)",
-    transformOrigin: "left",
-    transition: "transform 0.3s ease",
+    height: "100%",
+    background:
+      "radial-gradient(circle at top right, rgba(255,255,255,0.1), transparent)",
+    opacity: 0,
+    transition: "opacity 0.4s ease",
+    pointerEvents: "none",
   },
 };
-
-// Adicionando os keyframes para as animações
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(20px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-    
-    @keyframes gridMove {
-      from {
-        background-position: 0 0;
-      }
-      to {
-        background-position: 50px 50px;
-      }
-    }
-    
-    .card:hover .cardHoverEffect {
-      transform: scaleX(1);
-    }
-    
-    .card:hover .cardIcon {
-      transform: scale(1.1) rotate(5deg);
-      box-shadow: 0 0 20px rgba(96, 165, 250, 0.4);
-    }
-    
-    .titleWord:nth-child(1) { animation-delay: 0.1s; }
-    .titleWord:nth-child(2) { animation-delay: 0.2s; }
-  `;
-  document.head.appendChild(style);
-}

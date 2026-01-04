@@ -3,184 +3,250 @@ import React, { useEffect, useState, useRef } from "react";
 import Menu from "../../components/Menu";
 import Footer from "../../components/Footer";
 
+// ===============================================
+// --- COMPONENTE VISUAL: DIGITAL RAIN ---
+// (Copiado da sua página FormacaoAcademica para consistência)
+const DigitalRainBackground = () => {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext("2d");
+    let width, height;
+
+    const chars = "01ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let drops = [];
+    let symbols = [];
+
+    const init = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+
+      const columns = Math.floor(width / 22);
+      drops = [];
+      symbols = [];
+
+      for (let i = 0; i < columns; i++) {
+        drops[i] = Math.random() * -100;
+        symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+      }
+    };
+
+    const animate = () => {
+      // Fundo com rastro controlado (sem blur)
+      ctx.fillStyle = "rgba(5, 5, 5, 0.12)";
+      ctx.fillRect(0, 0, width, height);
+
+      ctx.font = "18px monospace";
+
+      for (let i = 0; i < drops.length; i++) {
+        // Troca de símbolo lenta (sem flicker)
+        if (Math.random() > 0.98) {
+          symbols[i] = chars[Math.floor(Math.random() * chars.length)];
+        }
+
+        ctx.fillStyle = Math.random() > 0.97 ? "#ffffff" : "#06b6d4";
+        ctx.fillText(symbols[i], i * 22, drops[i] * 22);
+
+        if (drops[i] * 22 > height && Math.random() > 0.98) {
+          drops[i] = 0;
+        }
+
+        drops[i] += 0.09;
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    window.addEventListener("resize", init);
+    init();
+    animate();
+
+    return () => window.removeEventListener("resize", init);
+  }, []);
+
+  return <canvas ref={canvasRef} style={styles.canvas} />;
+};
+// ===============================================
+
+// Hook personalizado para API (Mantido inalterado)
+function useApi() {
+  const getBaseUrl = () => {
+    if (typeof window !== "undefined") {
+      if (
+        window.location.hostname !== "localhost" &&
+        !window.location.hostname.includes("127.0.0.1")
+      ) {
+        return "";
+      }
+      return "http://localhost:4000";
+    }
+    return process.env.NODE_ENV === "production" ? "" : "http://localhost:4000";
+  };
+
+  const fetchApi = async (endpoint, options = {}) => {
+    const baseUrl = getBaseUrl();
+    const url = `${baseUrl}${endpoint}`;
+    try {
+      const response = await fetch(url, {
+        ...options,
+        headers: { "Content-Type": "application/json", ...options.headers },
+      });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("API Error:", error);
+      throw error;
+    }
+  };
+
+  return { fetchApi, getBaseUrl };
+}
+
 export default function Projetos() {
+  const { fetchApi } = useApi();
   const [projetos, setProjetos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [mounted, setMounted] = useState(false);
+  // Não precisamos mais do containerRef para partículas subtis, mas mantemos por precaução.
   const containerRef = useRef(null);
 
   useEffect(() => {
     setMounted(true);
-
-    // Efeito de partículas
-    const container = containerRef.current;
-    if (!container) return;
-
-    const createParticle = () => {
-      const particle = document.createElement("div");
-      particle.style.position = "absolute";
-      particle.style.width = "4px";
-      particle.style.height = "4px";
-      particle.style.background = "rgba(96, 165, 250, 0.6)";
-      particle.style.boxShadow = "0 0 10px rgba(96, 165, 250, 0.8)";
-      particle.style.borderRadius = "50%";
-      particle.style.zIndex = "0";
-
-      // Posição aleatória
-      const x = Math.random() * 100;
-      const y = Math.random() * 100;
-      particle.style.left = `${x}%`;
-      particle.style.top = `${y}%`;
-
-      container.appendChild(particle);
-
-      // Animação
-      const keyframes = [
-        { transform: "translate(0, 0)", opacity: 0 },
-        {
-          transform: `translate(${Math.random() * 40 - 20}px, ${
-            Math.random() * 40 - 20
-          }px)`,
-          opacity: 1,
-        },
-        {
-          transform: `translate(${Math.random() * 80 - 40}px, ${
-            Math.random() * 80 - 40
-          }px)`,
-          opacity: 0,
-        },
-      ];
-
-      const options = {
-        duration: 3000 + Math.random() * 4000,
-        iterations: Infinity,
-        delay: Math.random() * 2000,
-      };
-
-      particle.animate(keyframes, options);
-    };
-
-    // Criar várias partículas
-    for (let i = 0; i < 20; i++) {
-      createParticle();
-    }
   }, []);
 
+  // Lógica de carregamento de projetos (Mantida inalterada)
   useEffect(() => {
-    fetch("/api/projetos")
-      .then((res) => {
-        if (!res.ok) throw new Error("Erro ao carregar projetos");
-        return res.json();
-      })
-      .then((data) => {
+    const loadProjetos = async () => {
+      // ... (Lógica de API/Fallback idêntica ao original)
+      try {
+        const data = await fetchApi("/api/projetos");
         setProjetos(data);
         setLoading(false);
-      })
-      .catch((err) => {
-        setError(err.message);
-        setLoading(false);
-      });
-  }, []);
+      } catch (err) {
+        try {
+          const response = await fetch("/api/projetos");
+          if (response.ok) {
+            const data = await response.json();
+            setProjetos(data);
+            setLoading(false);
+          } else {
+            throw new Error("Next.js API também falhou");
+          }
+        } catch (secondErr) {
+          console.log(secondErr);
+        }
+      }
+    };
+
+    loadProjetos();
+  }, [fetchApi]);
+
+  // --- LOADING / ERROR STYLES ATUALIZADOS para o tema Digital Rain ---
+  const sharedBackground = {
+    minHeight: "100vh",
+    background: "#0a0a0a", // Fundo Sólido Escuro
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    color: "#fff",
+    fontSize: "1.5rem",
+    position: "relative",
+    overflow: "hidden",
+    fontFamily: "'Courier New', monospace",
+  };
 
   if (loading)
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#fff",
-          fontSize: "1.5rem",
-          fontWeight: "600",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div style={styles.lightEffect1}></div>
-        <div style={styles.lightEffect2}></div>
-        <div style={styles.gridOverlay}></div>
+      <div style={sharedBackground}>
+        <DigitalRainBackground />
+        <div style={styles.scanline}></div>
         <div style={{ position: "relative", zIndex: 2 }}>
-          Carregando projetos...
+          <span style={{ color: "#06b6d4" }}>[LOG]</span> Carregando Dados dos
+          Projetos... <span style={styles.blinkingCursor}>_</span>
+        </div>
+        {/* Estilos Globais para Loading/Animações (mantidos) */}
+        <style jsx global>{`
+          @keyframes scanline {
+            0% {
+              top: -10%;
+              opacity: 0;
+            }
+            50% {
+              opacity: 1;
+            }
+            100% {
+              top: 110%;
+              opacity: 0;
+            }
+          }
+          @keyframes blink {
+            0%,
+            100% {
+              opacity: 1;
+            }
+            50% {
+              opacity: 0;
+            }
+          }
+        `}</style>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div style={sharedBackground}>
+        <DigitalRainBackground />
+        <div style={styles.scanline}></div>
+        <div style={{ position: "relative", zIndex: 2 }}>
+          <span style={{ color: "#ff6b6b" }}>[ERROR]</span> Falha na Conexão:{" "}
+          {error}
+          <button
+            onClick={() => window.location.reload()}
+            style={styles.retryButton}
+          >
+            Tentar Novamente
+          </button>
         </div>
       </div>
     );
-  if (error)
-    return (
-      <div
-        style={{
-          minHeight: "100vh",
-          background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          color: "#ff6b6b",
-          fontSize: "1.2rem",
-          fontWeight: "600",
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <div style={styles.lightEffect1}></div>
-        <div style={styles.lightEffect2}></div>
-        <div style={styles.gridOverlay}></div>
-        <div style={{ position: "relative", zIndex: 2 }}>Erro: {error}</div>
-      </div>
-    );
 
+  // --- RENDER PRINCIPAL (Aplicando Estilos Digital Rain) ---
   return (
-    <div
-      ref={containerRef}
-      style={{
-        minHeight: "100vh",
-        background: "linear-gradient(135deg, #0f0c29, #302b63, #24243e)",
-        fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-        position: "relative",
-        overflow: "hidden",
-      }}
-    >
-      {/* Efeitos de luz de fundo */}
-      <div style={styles.lightEffect1}></div>
-      <div style={styles.lightEffect2}></div>
-      <div style={styles.lightEffect3}></div>
-
-      {/* Grade animada */}
-      <div style={styles.gridOverlay}></div>
+    <div ref={containerRef} style={styles.mainContainer}>
+      <DigitalRainBackground />
+      <div style={styles.scanline}></div>
 
       <Menu />
 
-      <div style={{ position: "relative", zIndex: 2 }}>
+      <div style={{ position: "relative", zIndex: 5, paddingBottom: "4rem" }}>
+        {/* Título: Estilo Glitch/Terminal */}
         <h1
           style={{
-            color: "#fff",
-            fontSize: "clamp(2.5rem, 5vw, 3.5rem)",
-            marginBottom: "2.5rem",
-            textAlign: "center",
-            textShadow: "0 0 20px rgba(96, 165, 250, 0.8)",
-            paddingTop: "2rem",
+            ...styles.pageTitle,
             opacity: mounted ? 1 : 0,
-            transform: mounted ? "translateY(0)" : "translateY(20px)",
-            transition: "opacity 1s ease, transform 1s ease",
           }}
         >
-          Meus <span style={{ color: "#60a5fa" }}>Projetos</span>
+          <span style={styles.codeLabel}>{"<DATA_STREAM_PROJECTS>"}</span>
+          <span style={styles.glitchTitle} data-text="REGISTO DE PROJETOS">
+            REGISTO DE PROJETOS
+          </span>
+          <div style={styles.titleInfo}>
+                      Total: {projetos.length} projeto
+            {projetos.length !== 1 ? "s" : ""}         {" "}
+          </div>
         </h1>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
-            gap: "2rem",
-            maxWidth: "1200px",
-            margin: "0 auto",
-            padding: "0 1rem 50px",
-          }}
-        >
+        <div style={styles.projectGrid}>
           {projetos.map((proj, index) => (
             <div
               key={proj.id}
+              className="project-card-data-block"
               style={{
                 ...styles.projectCard,
                 opacity: mounted ? 1 : 0,
@@ -190,41 +256,23 @@ export default function Projetos() {
                 }s, transform 0.8s ease ${index * 0.1}s, box-shadow 0.3s ease`,
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-10px)";
+                e.currentTarget.style.transform = "translateY(-5px)";
                 e.currentTarget.style.boxShadow =
-                  "0 20px 40px rgba(96, 165, 250, 0.3)";
+                  "0 0 15px rgba(6, 182, 212, 0.6)"; // Sombra Tech no hover
               }}
               onMouseLeave={(e) => {
                 e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow =
-                  "0 8px 32px rgba(0, 0, 0, 0.3)";
+                e.currentTarget.style.boxShadow = "0 0 10px rgba(0, 0, 0, 0.5)"; // Sombra base
               }}
             >
-              <div style={styles.cardHeader}>
-                <h2
-                  style={{
-                    marginBottom: "1rem",
-                    color: "#fff",
-                    fontSize: "1.6rem",
-                    fontWeight: "700",
-                    letterSpacing: "0.02em",
-                    textAlign: "center",
-                  }}
-                >
-                  {proj.titulo}
-                </h2>
-                <div style={styles.cardGlow}></div>
-              </div>
+              <h2 style={styles.cardTitle}>
+                <span style={{ color: "#6366f1" }}>//</span> {proj.titulo}
+              </h2>
 
-              <p
-                style={{
-                  color: "#cbd5e1",
-                  fontSize: "1rem",
-                  lineHeight: "1.6",
-                  marginBottom: "1.5rem",
-                  flexGrow: 1,
-                }}
-              >
+              <p style={styles.cardDescription}>
+                <span style={{ color: "#10b981", fontWeight: "bold" }}>
+                  {">>"} EXECUTE:
+                </span>{" "}
                 {proj.descricao}
               </p>
 
@@ -232,39 +280,11 @@ export default function Projetos() {
                 <div style={styles.techContainer}>
                   {proj.tecnologias.map((tech, i) => (
                     <span key={i} style={styles.techPill}>
+                      <span style={{ color: "#6366f1" }}>[</span>
                       {tech}
+                      <span style={{ color: "#6366f1" }}>]</span>
                     </span>
                   ))}
-                </div>
-              )}
-
-              {proj.videoUrl && (
-                <div
-                  style={{
-                    position: "relative",
-                    paddingBottom: "56.25%",
-                    height: 0,
-                    overflow: "hidden",
-                    borderRadius: "8px",
-                    marginBottom: "1.5rem",
-                    border: "1px solid rgba(96, 165, 250, 0.3)",
-                  }}
-                >
-                  <iframe
-                    src={proj.videoUrl}
-                    title={proj.titulo}
-                    style={{
-                      position: "absolute",
-                      top: 0,
-                      left: 0,
-                      width: "100%",
-                      height: "100%",
-                      border: "none",
-                      borderRadius: "8px",
-                    }}
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
                 </div>
               )}
 
@@ -274,20 +294,12 @@ export default function Projetos() {
                   target="_blank"
                   rel="noopener noreferrer"
                   style={styles.linkButton}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background =
-                      "linear-gradient(135deg, #2563eb, #1e40af)";
-                    e.currentTarget.style.boxShadow =
-                      "0 0 20px rgba(37, 99, 235, 0.5)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background =
-                      "linear-gradient(135deg, #3b82f6, #2563eb)";
-                    e.currentTarget.style.boxShadow =
-                      "0 4px 14px rgba(37, 99, 235, 0.4)";
-                  }}
+                  onMouseEnter={(e) => (e.currentTarget.style.color = "#fff")}
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "#06b6d4")
+                  }
                 >
-                  <span>Ver Código</span>
+                  <span style={{ color: "#fff" }}>&gt;</span> **VER CÓDIGO**
                   <svg
                     style={styles.linkIcon}
                     viewBox="0 0 24 24"
@@ -305,7 +317,8 @@ export default function Projetos() {
                 </a>
               ) : (
                 <div style={styles.disabledButton}>
-                  <span>Sem link disponível</span>
+                  <span style={{ color: "#ff6b6b" }}>&gt;</span> **ACESSO
+                  RESTRITO**
                 </div>
               )}
             </div>
@@ -314,91 +327,160 @@ export default function Projetos() {
       </div>
 
       <Footer />
+
+      {/* Estilos Globais CSS (Para Glitch/Scanline/Geral) */}
+      <style jsx global>{`
+        @keyframes scanline {
+            0% { top: -10%; opacity: 0; }
+            50% { opacity: 1; }
+            100% { top: 110%; opacity: 0; }
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+        @keyframes glitch {
+            0% { text-shadow: 2px 0 0 #6366f1, -2px 0 0 #06b6d4; }
+            25% { text-shadow: -2px 0 0 #6366f1, 2px 0 0 #06b6d4; }
+            50% { text-shadow: 1px 0 0 #6366f1, -1px 0 0 #06b6d4; }
+            75% { text-shadow: -1px 0 0 #6366f1, 1px 0 0 #06b6d4; }
+            100% { text-shadow: 2px 0 0 #6366f1, -2px 0 0 #06b6d4; }
+        }
+
+        .project-card-data-block:hover {
+            transform: translateY(-5px) !important;
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.6) !important;
+            border-color: #06b6d4 !important;
+        }
+
+        /* Loading Dots (Mantidos) */
+        .loading-dots { display: inline-flex; align-items: center; gap: 4px; }
+        .loading-dots span { width: 8px; height: 8px; border-radius: 50%; background: #60a5fa; display: inline-block; animation: loading-dots 1.4s infinite ease-in-out both; }
+        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes loading-dots {
+          0%, 80%, 100% { transform: scale(0); opacity: 0.5; }
+          40% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }
 
 const styles = {
-  lightEffect1: {
-    position: "absolute",
-    top: "10%",
-    left: "10%",
-    width: "300px",
-    height: "300px",
-    background:
-      "radial-gradient(circle, rgba(96, 165, 250, 0.2) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 8s infinite alternate",
-    zIndex: 0,
+  // --- Container Principal (Terminal Theme) ---
+  mainContainer: {
+    minHeight: "100vh",
+    background: "#0a0a0a", // Fundo super escuro
+    fontFamily: "'Courier New', monospace", // Fonte Tech
+    position: "relative",
+    overflowX: "hidden",
   },
-  lightEffect2: {
-    position: "absolute",
-    top: "60%",
-    right: "15%",
-    width: "400px",
-    height: "400px",
-    background:
-      "radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 12s infinite alternate-reverse",
-    zIndex: 0,
-  },
-  lightEffect3: {
-    position: "absolute",
-    bottom: "15%",
-    left: "20%",
-    width: "250px",
-    height: "250px",
-    background:
-      "radial-gradient(circle, rgba(16, 185, 129, 0.1) 0%, transparent 70%)",
-    borderRadius: "50%",
-    animation: "pulse 10s infinite alternate",
-    zIndex: 0,
-  },
-  gridOverlay: {
-    position: "absolute",
+  // --- Efeitos de Fundo Digitais ---
+  canvas: {
+    position: "fixed",
     top: 0,
     left: 0,
     width: "100%",
     height: "100%",
-    backgroundImage: `
-      linear-gradient(rgba(18, 25, 50, 0.3) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(18, 25, 50, 0.3) 1px, transparent 1px)
-    `,
-    backgroundSize: "50px 50px",
     zIndex: 0,
-    animation: "gridMove 20s infinite linear",
+    opacity: 0.4,
+  },
+  scanline: {
+    position: "fixed",
+    left: 0,
+    width: "100%",
+    height: "5px",
+    background: "rgba(6, 182, 212, 0.5)", // Ciano
+    boxShadow: "0 0 15px rgba(6, 182, 212, 0.8)",
+    zIndex: 2,
+    animation: "scanline 6s infinite linear",
+    pointerEvents: "none",
+  },
+  blinkingCursor: {
+    display: "inline-block",
+    width: "8px",
+    height: "15px",
+    background: "#06b6d4",
+    animation: "blink 1s infinite",
+    verticalAlign: "middle",
+    marginLeft: "5px",
+  },
+
+  // --- Título ---
+  pageTitle: {
+    color: "#fff",
+    fontSize: "clamp(2rem, 5vw, 3rem)",
+    marginBottom: "2.5rem",
+    textAlign: "center",
+    textShadow: "0 0 20px rgba(6, 182, 212, 0.5)",
+    paddingTop: "4rem",
+    position: "relative",
+    zIndex: 3,
+    textTransform: "uppercase",
+  },
+  codeLabel: {
+    display: "block",
+    fontSize: "0.8rem",
+    color: "#6366f1", // Roxo
+    letterSpacing: "2px",
+    marginBottom: "10px",
+  },
+  glitchTitle: {
+    fontWeight: "bold",
+    animation: "glitch 3s infinite linear alternate",
+  },
+  titleInfo: {
+    fontSize: "1rem",
+    marginTop: "10px",
+    color: "#10b981", // Verde
+    fontWeight: "normal",
+    textShadow: "none",
+  },
+
+  // --- Cards (Data Blocks) ---
+  projectGrid: {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))",
+    gap: "2rem",
+    maxWidth: "1200px",
+    margin: "0 auto",
+    padding: "0 1rem",
   },
   projectCard: {
-    backgroundColor: "rgba(17, 25, 40, 0.7)",
-    backdropFilter: "blur(10px)",
-    borderRadius: "16px",
+    backgroundColor: "rgba(10, 10, 15, 0.9)", // Quase opaco para contraste
+    backdropFilter: "none",
+    borderRadius: "2px", // Cantos afiados
     padding: "2rem",
-    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.3)",
+    boxShadow: "0 0 10px rgba(0, 0, 0, 0.5)", // Sombra base
+    border: "1px solid rgba(6, 182, 212, 0.3)", // Borda Tech
     display: "flex",
     flexDirection: "column",
     justifyContent: "space-between",
-    border: "1px solid rgba(96, 165, 250, 0.2)",
     transition: "all 0.3s ease",
     position: "relative",
     overflow: "hidden",
+    color: "#e0e0e0",
   },
-  cardHeader: {
-    position: "relative",
+  cardTitle: {
+    marginBottom: "1rem",
+    color: "#06b6d4", // Ciano
+    fontSize: "1.5rem",
+    fontWeight: "700",
+    letterSpacing: "0.05em",
+    textAlign: "left",
+    textTransform: "uppercase",
+  },
+  cardDescription: {
+    color: "#bbb",
+    fontSize: "1rem",
+    lineHeight: "1.6",
     marginBottom: "1.5rem",
+    flexGrow: 1,
+    whiteSpace: "pre-line",
   },
-  cardGlow: {
-    position: "absolute",
-    top: "0",
-    left: "0",
-    right: "0",
-    bottom: "0",
-    borderRadius: "10px",
-    boxShadow: "0 0 30px rgba(96, 165, 250, 0.4)",
-    opacity: 0,
-    animation: "pulseGlow 2s infinite alternate",
-    zIndex: -1,
-  },
+
+  // --- Tecnologias (Tags de Comando) ---
   techContainer: {
     display: "flex",
     flexWrap: "wrap",
@@ -406,73 +488,65 @@ const styles = {
     marginBottom: "1.5rem",
   },
   techPill: {
-    padding: "0.4rem 0.8rem",
-    backgroundColor: "rgba(96, 165, 250, 0.2)",
-    color: "#93c5fd",
-    borderRadius: "20px",
+    padding: "0.3rem 0.6rem",
+    backgroundColor: "rgba(16, 185, 129, 0.1)", // Verde Subtil
+    color: "#10b981",
+    borderRadius: "2px",
     fontSize: "0.85rem",
     fontWeight: "500",
-    border: "1px solid rgba(96, 165, 250, 0.3)",
+    border: "1px dashed rgba(16, 185, 129, 0.3)",
   },
+
+  // --- Botões (Comando Prompt) ---
   linkButton: {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
     gap: "0.5rem",
     padding: "0.8rem 1.5rem",
-    background: "linear-gradient(135deg, #3b82f6, #2563eb)",
-    color: "#fff",
-    borderRadius: "8px",
+    background: "transparent",
+    color: "#06b6d4", // Ciano
+    border: "1px solid #06b6d4",
+    borderRadius: "2px",
     fontWeight: "600",
     textDecoration: "none",
     transition: "all 0.3s ease",
-    boxShadow: "0 4px 14px rgba(37, 99, 235, 0.4)",
+    boxShadow: "0 0 8px rgba(6, 182, 212, 0.4)",
+    textTransform: "uppercase",
   },
   linkIcon: {
     width: "18px",
     height: "18px",
+    color: "currentColor",
   },
   disabledButton: {
-    display: "inline-flex",
+    display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    gap: "0.5rem",
     padding: "0.8rem 1.5rem",
-    backgroundColor: "rgba(156, 163, 175, 0.2)",
-    color: "rgba(209, 213, 219, 0.8)",
-    borderRadius: "8px",
+    backgroundColor: "rgba(255, 107, 107, 0.05)",
+    color: "#ff6b6b", // Vermelho
+    border: "1px solid #ff6b6b",
+    borderRadius: "2px",
     fontWeight: "600",
     textDecoration: "none",
-    border: "1px solid rgba(156, 163, 175, 0.3)",
     cursor: "not-allowed",
+    textTransform: "uppercase",
+  },
+
+  // --- Estado de Erro / Loading ---
+
+  retryButton: {
+    marginTop: "20px",
+    padding: "10px 20px",
+    background: "rgba(255, 107, 107, 0.1)",
+    border: "1px solid #ff6b6b",
+    color: "#fff",
+    borderRadius: "2px",
+    cursor: "pointer",
+    transition: "all 0.3s ease",
+    fontFamily: "'Courier New', monospace",
+    textTransform: "uppercase",
   },
 };
-
-// Adicionando os keyframes para as animações
-if (typeof document !== "undefined") {
-  const style = document.createElement("style");
-  style.textContent = `
-    @keyframes pulse {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.7; }
-    }
-    
-    @keyframes gridMove {
-      from {
-        background-position: 0 0;
-      }
-      to {
-        background-position: 50px 50px;
-      }
-    }
-    
-    @keyframes pulseGlow {
-      0% { opacity: 0.3; }
-      100% { opacity: 0.8; }
-    }
-    
-    .project-card:hover .card-glow {
-      opacity: 0.6;
-    }
-  `;
-  document.head.appendChild(style);
-}

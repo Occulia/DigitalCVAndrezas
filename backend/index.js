@@ -3,8 +3,8 @@ const cors = require("cors");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 4000; // Usa a porta da Vercel ou 4000 localmente
-
+///const PORT = process.env.PORT || 4000; // Usa a porta da Vercel ou 4000 localmente
+const PORT = 4000;
 app.use(cors());
 
 // Dados dos projetos
@@ -42,7 +42,7 @@ const projetos = [
     descricao:
       "Projeto de currículo digital construído com Next.js, que integra um backend API para fornecer dados de formação acadêmica e projetos, e um frontend que consome essa API para apresentar as informações de forma dinâmica e elegante.",
     tecnologias: ["Next.js", "React", "API REST", "JavaScript", "CSS"],
-    link: "https://github.com/Occulia/DigitalCV.git",
+    link: "",
   },
   {
     id: 4,
